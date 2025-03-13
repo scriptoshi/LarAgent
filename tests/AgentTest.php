@@ -2,6 +2,7 @@
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use LarAgent\Agent;
+use LarAgent\Message;
 use LarAgent\Tests\Fakes\FakeLlmDriver;
 use LarAgent\Tool;
 
@@ -179,4 +180,53 @@ it('can get chat keys filtered by agent class', function () {
         ->and($otherAgentKeys)->toHaveCount(1)
         ->and($otherAgentKeys)->toContain('AnotherAgent_gpt-4o-mini_user3')
         ->and($otherAgentKeys)->not->toContain('TestAgent_gpt-4_user1');
+});
+
+it('can add custom message to chat history', function () {
+    $agent = TestAgent::for('test_key');
+    $systemMessage = Message::system('Test system message');
+    
+    $agent->addMessage($systemMessage);
+    $messages = $agent->chatHistory()->getMessages();
+    
+    expect($messages)->toContain($systemMessage);
+});
+
+it('excludes parallel_tool_calls from config when set to null', function () {
+    $agent = new TestAgent('test_session');
+    $reflection = new ReflectionClass($agent);
+    $parallelToolCalls = $reflection->getProperty('parallelToolCalls');
+    $parallelToolCalls->setAccessible(true);
+    $parallelToolCalls->setValue($agent, null);
+    
+    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn() => 'test');
+    $agent->withTool($tool);
+    
+    $buildConfigsForLaragent = $reflection->getMethod('buildConfigsForLaragent');
+    $buildConfigsForLaragent->setAccessible(true);
+    $config = $buildConfigsForLaragent->invoke($agent);
+
+    expect($config)->toHaveKey('parallelToolCalls')
+        ->and($config['parallelToolCalls'])->toBeNull();
+});
+
+it('uses developer role for instructions when enabled', function () {
+    $agent = new TestAgent('test_session');
+    
+    $reflection = new ReflectionClass($agent);
+    $parallelToolCalls = $reflection->getProperty('developerRoleForInstructions');
+    $parallelToolCalls->setAccessible(true);
+    $parallelToolCalls->setValue($agent, true);
+    
+    $agent->respond('Test message');
+
+    $messages = $agent->chatHistory()->getMessages();
+    $hasDevMessage = false;
+    foreach ($messages as $message) {
+        if ($message->getRole() === 'developer' && $message->getContent() === 'You are a test agent.') {
+            $hasDevMessage = true;
+            break;
+        }
+    }
+    expect($hasDevMessage)->toBeTrue();
 });

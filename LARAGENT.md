@@ -217,7 +217,7 @@ $agent
 // Setup agent with tools and structured output
 $agent->setTools([$weatherTool])
     ->structured($weatherSchema)
-    ->withInstructions('You are a weather assistant')
+    ->withInstructions('You are a weather assistant', false) // false = use system role, true = use developer role
     ->withMessage(Message::user('What\'s the weather in London?'));
 
 // Run the conversation

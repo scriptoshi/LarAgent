@@ -3,8 +3,9 @@
 namespace LarAgent;
 
 use LarAgent\Core\Abstractions\Tool as AbstractTool;
+use LarAgent\Core\Contracts\Tool as ToolInterface;
 
-class Tool extends AbstractTool
+class Tool extends AbstractTool implements ToolInterface
 {
     protected mixed $callback = null;
 

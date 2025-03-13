@@ -7,6 +7,7 @@ use LarAgent\Attributes\Tool as ToolAttribute;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 use LarAgent\Core\Contracts\LlmDriver as LlmDriverInterface;
 use LarAgent\Core\Contracts\Message as MessageInterface;
+use LarAgent\Core\Contracts\Tool as ToolInterface;
 use LarAgent\Core\DTO\AgentDTO;
 use LarAgent\Core\Traits\Events;
 
@@ -51,6 +52,9 @@ class Agent
     /** @var string */
     protected $providerName = '';
 
+    /** @var bool */
+    protected $developerRoleForInstructions = false;
+
     // Driver configs
 
     /** @var string */
@@ -85,7 +89,7 @@ class Agent
     /** @var int */
     protected $reinjectInstructionsPer;
 
-    /** @var bool */
+    /** @var ?bool */
     protected $parallelToolCalls;
 
     /** @var string */
@@ -179,7 +183,7 @@ class Agent
         }
 
         $this->agent
-            ->withInstructions($this->instructions())
+            ->withInstructions($this->instructions(), $this->developerRoleForInstructions)
             ->withMessage($message)
             ->setTools($this->getTools());
 
@@ -409,6 +413,13 @@ class Agent
         return $this;
     }
 
+    public function addMessage(MessageInterface $message): static
+    {
+        $this->chatHistory()->addMessage($message);
+
+        return $this;
+    }
+
     /**
      * Convert Agent to DTO
      * // @todo mention DTO in the documentation as state for events
@@ -524,14 +535,14 @@ class Agent
         $config = [
             'model' => $this->model(),
         ];
-        if (isset($this->maxCompletionTokens)) {
-            $config['max_completion_tokens'] = $this->maxCompletionTokens;
+        if (property_exists($this, 'maxCompletionTokens')) {
+            $config['maxCompletionTokens'] = $this->maxCompletionTokens;
         }
-        if (isset($this->temperature)) {
+        if (property_exists($this, 'temperature')) {
             $config['temperature'] = $this->temperature;
         }
-        if (isset($this->parallelToolCalls)) {
-            $config['parallel_tool_calls'] = $this->parallelToolCalls;
+        if (property_exists($this, 'parallelToolCalls')) {
+            $config['parallelToolCalls'] = $this->parallelToolCalls;
         }
 
         return $config;

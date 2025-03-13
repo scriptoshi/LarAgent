@@ -430,6 +430,12 @@ public function withImages(array $imageUrls);
 public function withModel(string $model);
 
 /**
+ * Add custom message to the chat history with a needed role
+ * @param MessageInterface Easily created with message class: Message::system('Your message here')
+ */
+public function addMessage(MessageInterface $message);
+
+/**
  * Clear the chat history 
  * This removes all messages from the chat history
  */
@@ -522,6 +528,8 @@ protected $parallelToolCalls;
 /** @var array - List of tool classes to be registered with the agent */
 protected $tools = [];
 ```
+
+_Note: You can set parallelToolCalls to null in case you want to remove from request, since some models do not support parallel tool calls property._
 
 There are three ways to create and register tools in your agent:
 
@@ -692,6 +700,13 @@ Some LLM drivers such as OpenAI provide additional data with the response, such 
 protected $saveChatKeys;
 ```
 By default it is true, since it is required for [chat history bunch clearing](#clear-chat-history) command to work.
+
+**developerRoleForInstructions**
+```php
+/** @var bool - Use developer role for instructions */
+protected $developerRoleForInstructions;
+```
+By default it is disabled, but you can turn it on by setting it to true in your agent.
 
 #### Creating Custom Chat History
 

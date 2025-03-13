@@ -16,7 +16,7 @@ function config(string $key): mixed
             'model' => 'gpt-4o',
             'api_key' => $yourApiKey,
             'default_context_window' => 50000,
-            'default_max_completion_tokens' => 100,
+            'default_max_completion_tokens' => 1000,
             'default_temperature' => 1,
         ],
     ][$key];
@@ -62,6 +62,8 @@ class WeatherAgent extends LarAgent\Agent
 
     protected $provider = 'default';
 
+    protected $model = 'o1-2024-12-17';
+
     // Tool by classes
     protected $tools = [
         // WeatherTool::class
@@ -69,6 +71,11 @@ class WeatherAgent extends LarAgent\Agent
 
     // To not saves chat keys to memory, by default = true
     protected $saveChatKeys = false;
+
+    // Switch to developer role for instructions
+    // protected $developerRoleForInstructions = true;
+
+    protected $parallelToolCalls = null;
 
     protected $history = 'in_memory';
 

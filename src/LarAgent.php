@@ -24,7 +24,9 @@ class LarAgent
 
     protected int $reinjectInstructionsPer = 0; // 0 Means never
 
-    protected bool $parallelToolCalls = true;
+    protected ?bool $parallelToolCalls = true;
+
+    protected bool $useDeveloperForInstructions = false;
 
     protected string $instructions;
 
@@ -115,9 +117,22 @@ class LarAgent
         return $this->instructions ?? null;
     }
 
-    public function withInstructions(string $instructions): self
+    public function getUseDeveloperForInstructions(): bool
+    {
+        return $this->useDeveloperForInstructions;
+    }
+
+    public function useDeveloperRole(bool $useDeveloperForInstructions): self
+    {
+        $this->useDeveloperForInstructions = $useDeveloperForInstructions;
+
+        return $this;
+    }
+
+    public function withInstructions(string $instructions, bool $useDeveloperRoleForInstructions = false): self
     {
         $this->instructions = $instructions;
+        $this->useDeveloperForInstructions = $useDeveloperRoleForInstructions;
 
         return $this;
     }
@@ -242,7 +257,7 @@ class LarAgent
         $this->temperature = $configs['temperature'] ?? $this->temperature;
         $this->reinjectInstructionsPer = $configs['reinjectInstructionsPer'] ?? $this->reinjectInstructionsPer;
         $this->model = $configs['model'] ?? $this->model;
-        $this->parallelToolCalls = $configs['parallelToolCalls'] ?? $this->parallelToolCalls;
+        $this->parallelToolCalls = array_key_exists('parallelToolCalls', $configs) ? $configs['parallelToolCalls'] : $this->parallelToolCalls;
         $this->toolChoice = $configs['toolChoice'] ?? $this->toolChoice;
     }
 
@@ -265,12 +280,12 @@ class LarAgent
         return $this->tools;
     }
 
-    public function getParallelToolCalls(): bool
+    public function getParallelToolCalls(): ?bool
     {
-        return $this->parallelToolCalls ?? false;
+        return $this->parallelToolCalls;
     }
 
-    public function setParallelToolCalls(bool $parallelToolCalls): self
+    public function setParallelToolCalls(?bool $parallelToolCalls): self
     {
         $this->parallelToolCalls = $parallelToolCalls;
 
@@ -384,21 +399,29 @@ class LarAgent
             'temperature' => $this->getTemperature(),
         ];
 
-        if (! empty($this->tools)) {
-            $configs['parallel_tool_calls'] = $this->getParallelToolCalls();
+        if (!empty($this->tools)) {
+            $PTC = $this->getParallelToolCalls();
+            if ($PTC !== null) {
+                $configs['parallel_tool_calls'] = $PTC;
+            }
 
             $toolChoice = $this->getToolChoice();
             if ($toolChoice !== null) {
                 $configs['tool_choice'] = $toolChoice;
             }
         }
-
+        
         return $configs;
     }
 
     protected function injectInstructions(): void
     {
-        $this->chatHistory->addMessage(Message::system($this->getInstructions()));
+        if ($this->getUseDeveloperForInstructions()) {
+            $message = Message::developer($this->getInstructions());
+        } else {
+            $message = Message::system($this->getInstructions());
+        }
+        $this->chatHistory->addMessage($message);
     }
 
     protected function processTools(ToolCallMessage $message): void

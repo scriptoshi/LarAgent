@@ -120,3 +120,47 @@ it('can run with tools', function () {
     $history = $chatHistory->toArray();
     expect($history)->toContain($userMessage->toArray());
 });
+
+it('excludes parallel_tool_calls from config when set to null', function () {
+    $driver = new FakeLlmDriver;
+    $chatHistory = new InMemoryChatHistory('test-chat-history');
+    $agent = LarAgent::setup($driver, $chatHistory);
+
+    $agent->setParallelToolCalls(null);
+    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn() => 'test');
+    $agent->setTools([$tool]);
+
+    $reflection = new ReflectionClass($agent);
+    $buildConfig = $reflection->getMethod('buildConfig');
+    $buildConfig->setAccessible(true);
+    $config = $buildConfig->invoke($agent);
+
+    expect($config)->not->toHaveKey('parallel_tool_calls');
+});
+
+
+it('uses developer role for instructions when enabled', function () {
+    $driver = new FakeLlmDriver;
+    $chatHistory = new InMemoryChatHistory('test-chat-history');
+    $agent = LarAgent::setup($driver, $chatHistory);
+
+    $instructions = 'Test instructions';
+    $agent->withInstructions($instructions, true); // Enable developer role
+
+    // Add a message to trigger instruction injection
+    $driver->addMockResponse('stop', [
+        'content' => 'Test response',
+    ]);
+    $agent->withMessage(Message::user('Test message'));
+    $agent->run();
+
+    $history = $chatHistory->toArray();
+    $hasDevMessage = false;
+    foreach ($history as $message) {
+        if ($message['role'] === 'developer' && $message['content'] === $instructions) {
+            $hasDevMessage = true;
+            break;
+        }
+    }
+    expect($hasDevMessage)->toBeTrue();
+});

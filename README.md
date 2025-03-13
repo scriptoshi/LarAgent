@@ -139,9 +139,14 @@ Here's what's coming next to make LarAgent even more powerful:
   - `make:agent:tool` - Generate tool classes with ready-to-use stubs
   - `make:agent:chat-history` - Scaffold custom chat history implementations
   - `make:llm-driver` - Create custom LLM driver integrations
+- **Native Laravel events support** - Support for Laravel events
+- **Debug mode** -  Should log all processes happening under the hood
 
 ### Enhanced AI Capabilities 🧠
 - **Prism Package Integration** - Additional LLM providers support
+- **Gemini Integration** - Additional LLM provider
+- **Anthropic Integration** - Additional LLM provider
+- **Usage abstraction** - Abstraction for tokens usage
 - **Streaming Support** - Out-of-the-box support for streaming responses
 - **RAG & Knowledge Base** 
   - Built-in vector storage providers
@@ -149,6 +154,8 @@ Here's what's coming next to make LarAgent even more powerful:
   - Smart context management
 - **Ready-to-use Tools** - Built-in tools as traits
 - **Structured Output at runtime** - Allow defining the response JSON Schema at runtime.
+- **Transfer tool** - One of the methods of agents chaining
+
 
 ### Security & Storage 🔒
 - **Enhanced Chat History Security** - Optional encryption for sensitive conversations
@@ -1499,8 +1506,11 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
+Thanks to these people and projects, LarAgent would not be possible without them:
+
 -   [maestroerror](https://github.com/maestroerror)
 -   [All Contributors](../../contributors)
+-   [openai-php/client](https://github.com/openai-php/client)
 
 ## License
 

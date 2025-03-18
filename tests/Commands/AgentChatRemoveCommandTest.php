@@ -23,6 +23,7 @@ class TestAgent extends Agent
     protected $provider = 'default';
     protected $tools = [];
     protected $driver = FakeLlmDriver::class;
+    protected $saveChatKeys = true;
 
     public function instructions()
     {
@@ -61,28 +62,30 @@ afterEach(function () {
 });
 
 test('it fails when agent does not exist', function () {
-    $this->artisan('agent:chat:clear', ['agent' => 'NonExistentAgent'])
+    $this->artisan('agent:chat:remove', ['agent' => 'NonExistentAgent'])
         ->assertFailed()
         ->expectsOutput('Agent not found: NonExistentAgent');
 });
 
-test('it can clear chat history for existing agent', function () {
+test('it can remove chat history for existing agent', function () {
     // Create some chat history first
     $agent = \App\AiAgents\TestAgent::for('test_key');
     $agent->message('Hello')->respond();
     
-    // Verify chat history exists
+    // Verify chat histories exist
     $chatKeys = $agent->getChatKeys();
-    expect($chatKeys)->toHaveCount(1);
-    expect($chatKeys)->toContain('TestAgent_gpt-4o-mini_test_key');
+    expect($chatKeys)->toHaveCount(1)
+        ->toContain('TestAgent_gpt-4o-mini_test_key');
     
-    // Clear the history
-    $this->artisan('agent:chat:clear', ['agent' => 'TestAgent'])
+    // Remove the histories
+    $this->artisan('agent:chat:remove', ['agent' => 'TestAgent'])
         ->assertSuccessful()
-        ->expectsOutput('Successfully cleared chat history for agent: TestAgent');
+        ->expectsOutput('Found 1 chat histories to remove...')
+        ->expectsOutput('Successfully removed all chat histories for agent: TestAgent');
     
-    // Verify all chat histories are cleared but keys remain
-    $agent = \App\AiAgents\TestAgent::for('test_key');
-    expect($agent->chatHistory()->getMessages())->toBeEmpty();
-    expect($agent->getChatKeys())->toHaveCount(1);
+    // Verify all chat histories and keys are completely removed
+    $agent = \App\AiAgents\TestAgent::for('new_key');
+    expect($agent->chatHistory()->getMessages())->toBeEmpty()
+        ->and($agent->getChatKeys())->toHaveCount(1)
+        ->and($agent->getChatKeys())->toContain('TestAgent_gpt-4o-mini_new_key');
 });

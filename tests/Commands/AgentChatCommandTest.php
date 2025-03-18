@@ -18,7 +18,7 @@ use LarAgent\Tests\Fakes\FakeLlmDriver;
 
 class TestAgent extends Agent
 {
-    protected $model = 'gpt-4-mini';
+    protected $model = 'gpt-4o-mini';
     protected $history = 'in_memory';
     protected $provider = 'default';
     protected $tools = [];

@@ -87,4 +87,24 @@ class JsonChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         return $this->folder.'/'.$this->getSafeName().'.json';
     }
+
+    public function removeChatFromMemory(string $key): void
+    {
+        $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $key);
+        $filePath = $this->folder.'/'.$safeName.'.json';
+
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+        $this->removeChatKey($key);
+    }
+
+    protected function removeChatKey(string $key): void
+    {
+        $keys = $this->loadKeysFromMemory();
+        $keys = array_filter($keys, fn($k) => $k !== $key);
+        
+        $keysPath = $this->folder.'/'.$this->keysFile;
+        file_put_contents($keysPath, json_encode($keys));
+    }
 }

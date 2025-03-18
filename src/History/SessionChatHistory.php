@@ -40,4 +40,17 @@ class SessionChatHistory extends ChatHistory implements ChatHistoryInterface
         $keys = Session::get($this->keysKey, []);
         return is_array($keys) ? $keys : [];
     }
+
+    public function removeChatFromMemory(string $key): void
+    {
+        Session::forget($key);
+        $this->removeChatKey($key);
+    }
+
+    protected function removeChatKey(string $key): void
+    {
+        $keys = $this->loadKeysFromMemory();
+        $keys = array_filter($keys, fn($k) => $k !== $key);
+        Session::put($this->keysKey, $keys);
+    }
 }

@@ -135,7 +135,8 @@ Here's what's coming next to make LarAgent even more powerful:
 
 ### Developer Experience 🛠️
 - **Artisan Commands for Rapid Development**
-  - `chat-history:clear AgentName` - Clear all chat histories for a specific agent
+  - `agent:chat:clear AgentName` - Clear all chat histories for a specific agent while preserving keys
+  - `agent:chat:remove AgentName` - Completely remove all chat histories and keys for a specific agent
   - `make:agent:tool` - Generate tool classes with ready-to-use stubs
   - `make:agent:chat-history` - Scaffold custom chat history implementations
   - `make:llm-driver` - Create custom LLM driver integrations
@@ -189,6 +190,7 @@ Stay tuned! We're constantly working on making LarAgent the most versatile AI ag
   - [Creating an Agent](#creating-an-agent-1)
   - [Interactive Chat](#interactive-chat)
   - [Clear Chat History](#clear-chat-history)
+  - [Remove Chat History](#remove-chat-history)
 - [🔍 Advanced Usage](#advanced-usage)
   - [AI Agents as Tools](#ai-agents-as-tools)
   - [Creating Custom Providers](#creating-custom-providers)
@@ -1387,13 +1389,23 @@ The chat session allows you to:
 
 ### Clear Chat History
 
-You can clear all chat history for a specific agent using the `agent:chat:clear` command:
+You can clear all chat histories for a specific agent using the `agent:chat:clear` command:
 
 ```bash
 php artisan agent:chat:clear AgentName
 ```
 
-This command will remove all stored conversations for the specified agent, regarding of the chat history storage method being used (json, cache, file, etc.).
+This command clears all chat histories for the specified agent while preserving the chat history structure and keys.
+
+### Remove Chat History
+
+You can completely remove all chat histories and keys for a specific agent using the `agent:chat:remove` command:
+
+```bash
+php artisan agent:chat:remove AgentName
+```
+
+This command removes all chat histories and their associated keys for the specified agent, effectively resetting the chat history.
 
 ## Advanced Usage
 

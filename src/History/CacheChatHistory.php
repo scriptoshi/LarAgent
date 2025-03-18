@@ -52,4 +52,26 @@ class CacheChatHistory extends ChatHistory implements ChatHistoryInterface
         $keys = $this->store ? Cache::store($this->store)->get($this->keysKey, []) : Cache::get($this->keysKey, []);
         return is_array($keys) ? $keys : [];
     }
+
+    public function removeChatFromMemory(string $key): void
+    {
+        if ($this->store) {
+            Cache::store($this->store)->forget($key);
+        } else {
+            Cache::forget($key);
+        }
+        $this->removeChatKey($key);
+    }
+
+    protected function removeChatKey(string $key): void
+    {
+        $keys = $this->loadKeysFromMemory();
+        $keys = array_filter($keys, fn($k) => $k !== $key);
+        
+        if ($this->store) {
+            Cache::store($this->store)->put($this->keysKey, $keys);
+        } else {
+            Cache::put($this->keysKey, $keys);
+        }
+    }
 }

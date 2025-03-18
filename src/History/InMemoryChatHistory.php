@@ -32,4 +32,15 @@ class InMemoryChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         return $this->keyStorage;
     }
+
+    public function removeChatFromMemory(string $key): void
+    {
+        unset($this->storage[$key]);
+        $this->removeChatKey($key);
+    }
+
+    protected function removeChatKey(string $key): void
+    {
+        $this->keyStorage = array_filter($this->keyStorage, fn($k) => $k !== $key);
+    }
 }

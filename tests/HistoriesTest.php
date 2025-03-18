@@ -144,3 +144,106 @@ it('can save and load keys in cache chat history', function () {
     $firstHistory->saveKeyToMemory();
     expect($firstHistory->loadKeysFromMemory())->toHaveCount(2);
 });
+
+it('can remove chat from session history', function () {
+    $history = new SessionChatHistory('test_session_remove');
+    $message = Message::create(Role::SYSTEM->value, 'Test message');
+    
+    $history->addMessage($message);
+    $history->writeToMemory();
+    $history->saveKeyToMemory();
+
+    // Verify chat exists
+    expect(Session::has('test_session_remove'))->toBeTrue()
+        ->and($history->loadKeysFromMemory())->toContain('test_session_remove');
+
+    // Remove chat
+    $history->removeChatFromMemory('test_session_remove');
+
+    // Verify chat is removed
+    expect(Session::has('test_session_remove'))->toBeFalse()
+        ->and($history->loadKeysFromMemory())->not->toContain('test_session_remove');
+});
+
+it('can remove chat from json history', function () {
+    $history = new JsonChatHistory('test_json_remove', ['folder' => __DIR__.'/json_storage']);
+    $message = Message::create(Role::SYSTEM->value, 'Test message');
+    
+    $history->addMessage($message);
+    $history->writeToMemory();
+    $history->saveKeyToMemory();
+
+    $filePath = __DIR__.'/json_storage/test_json_remove.json';
+
+    // Verify chat exists
+    expect(file_exists($filePath))->toBeTrue()
+        ->and($history->loadKeysFromMemory())->toContain('test_json_remove');
+
+    // Remove chat
+    $history->removeChatFromMemory('test_json_remove');
+
+    // Verify chat is removed
+    expect(file_exists($filePath))->toBeFalse()
+        ->and($history->loadKeysFromMemory())->not->toContain('test_json_remove');
+});
+
+it('can remove chat from file history', function () {
+    Storage::fake('local');
+    $history = new FileChatHistory('test_file_remove', ['disk' => 'local', 'folder' => 'chat_histories']);
+    $message = Message::create(Role::SYSTEM->value, 'Test message');
+    
+    $history->addMessage($message);
+    $history->writeToMemory();
+    $history->saveKeyToMemory();
+
+    // Verify chat exists
+    expect(Storage::disk('local')->exists('chat_histories/test_file_remove.json'))->toBeTrue()
+        ->and($history->loadKeysFromMemory())->toContain('test_file_remove');
+
+    // Remove chat
+    $history->removeChatFromMemory('test_file_remove');
+
+    // Verify chat is removed
+    expect(Storage::disk('local')->exists('chat_histories/test_file_remove.json'))->toBeFalse()
+        ->and($history->loadKeysFromMemory())->not->toContain('test_file_remove');
+});
+
+it('can remove chat from cache history', function () {
+    $history = new CacheChatHistory('test_cache_remove');
+    $message = Message::create(Role::SYSTEM->value, 'Test message');
+    
+    $history->addMessage($message);
+    $history->writeToMemory();
+    $history->saveKeyToMemory();
+
+    // Verify chat exists
+    expect(Cache::has('test_cache_remove'))->toBeTrue()
+        ->and($history->loadKeysFromMemory())->toContain('test_cache_remove');
+
+    // Remove chat
+    $history->removeChatFromMemory('test_cache_remove');
+
+    // Verify chat is removed
+    expect(Cache::has('test_cache_remove'))->toBeFalse()
+        ->and($history->loadKeysFromMemory())->not->toContain('test_cache_remove');
+});
+
+it('can remove chat from custom cache store', function () {
+    $history = new CacheChatHistory('test_store_remove', ['store' => 'array']);
+    $message = Message::create(Role::SYSTEM->value, 'Test message');
+    
+    $history->addMessage($message);
+    $history->writeToMemory();
+    $history->saveKeyToMemory();
+
+    // Verify chat exists in custom store
+    expect(Cache::store('array')->has('test_store_remove'))->toBeTrue()
+        ->and($history->loadKeysFromMemory())->toContain('test_store_remove');
+
+    // Remove chat
+    $history->removeChatFromMemory('test_store_remove');
+
+    // Verify chat is removed from custom store
+    expect(Cache::store('array')->has('test_store_remove'))->toBeFalse()
+        ->and($history->loadKeysFromMemory())->not->toContain('test_store_remove');
+});

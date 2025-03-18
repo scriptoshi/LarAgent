@@ -115,10 +115,22 @@ abstract class ChatHistory implements ArrayAccess, ChatHistoryInterface
     abstract public function writeToMemory(): void;
 
     // Abstract methods for keys management
+    /**
+     * Save the chat key to memory
+     */
     abstract public function saveKeyToMemory(): void;
 
+    /**
+     * Load chat keys from memory
+     */
     abstract public function loadKeysFromMemory(): array;
 
+    /**
+     * Completely Remove chat and it's key from memory
+     */
+    abstract public function removeChatFromMemory(string $key): void;
+
+    abstract protected function removeChatKey(string $key): void;
 
 
     // Token management methods

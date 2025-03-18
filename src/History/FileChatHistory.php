@@ -112,4 +112,24 @@ class FileChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         return $this->folder.'/'.$this->getSafeName().'.json';
     }
+
+    public function removeChatFromMemory(string $key): void
+    {
+        $safeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $key);
+        $filePath = $this->folder.'/'.$safeName.'.json';
+
+        if (Storage::disk($this->disk)->exists($filePath)) {
+            Storage::disk($this->disk)->delete($filePath);
+        }
+        $this->removeChatKey($key);
+    }
+
+    protected function removeChatKey(string $key): void
+    {
+        $keys = $this->loadKeysFromMemory();
+        $keys = array_filter($keys, fn($k) => $k !== $key);
+        
+        $keysPath = $this->folder.'/'.$this->keysFile;
+        Storage::disk($this->disk)->put($keysPath, json_encode($keys, JSON_PRETTY_PRINT));
+    }
 }

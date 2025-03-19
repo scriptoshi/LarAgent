@@ -115,7 +115,7 @@ it('respects save_chat_keys option when saving to memory', function () {
 
     // Test with save_chat_keys disabled
     $chatHistory = new InMemoryChatHistory('test_keys_disabled', [
-        'save_chat_keys' => false
+        'save_chat_keys' => false,
     ]);
     $message = new UserMessage('Message with keys disabled');
     $chatHistory->addMessage($message);

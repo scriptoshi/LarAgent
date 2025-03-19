@@ -399,7 +399,7 @@ class LarAgent
             'temperature' => $this->getTemperature(),
         ];
 
-        if (!empty($this->tools)) {
+        if (! empty($this->tools)) {
             $PTC = $this->getParallelToolCalls();
             if ($PTC !== null) {
                 $configs['parallel_tool_calls'] = $PTC;
@@ -410,7 +410,7 @@ class LarAgent
                 $configs['tool_choice'] = $toolChoice;
             }
         }
-        
+
         return $configs;
     }
 

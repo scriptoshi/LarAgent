@@ -353,7 +353,7 @@ class Agent
 
     /**
      * Get all chat keys associated with this agent class
-     * 
+     *
      * @return array Array of chat keys filtered by agent class name
      */
     public function getChatKeys(): array
@@ -362,7 +362,7 @@ class Agent
         $agentClass = class_basename(static::class);
 
         return array_filter($keys, function ($key) use ($agentClass) {
-            return str_starts_with($key, $agentClass . '_');
+            return str_starts_with($key, $agentClass.'_');
         });
     }
 
@@ -617,7 +617,6 @@ class Agent
         });
     }
 
-
     protected function setupBeforeRespond(): void
     {
         $this->setupAgent();
@@ -629,7 +628,6 @@ class Agent
         $chatHistory = $this->createChatHistory($this->getChatSessionId());
         $this->setChatHistory($chatHistory);
     }
-
 
     /**
      * Builds tools from methods annotated with #[Tool] attribute

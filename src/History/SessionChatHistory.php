@@ -29,7 +29,7 @@ class SessionChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         $keys = $this->loadKeysFromMemory();
         $key = $this->getIdentifier();
-        if (!in_array($key, $keys)) {
+        if (! in_array($key, $keys)) {
             $keys[] = $key;
             Session::put($this->keysKey, $keys);
         }
@@ -38,6 +38,7 @@ class SessionChatHistory extends ChatHistory implements ChatHistoryInterface
     public function loadKeysFromMemory(): array
     {
         $keys = Session::get($this->keysKey, []);
+
         return is_array($keys) ? $keys : [];
     }
 
@@ -50,7 +51,7 @@ class SessionChatHistory extends ChatHistory implements ChatHistoryInterface
     protected function removeChatKey(string $key): void
     {
         $keys = $this->loadKeysFromMemory();
-        $keys = array_filter($keys, fn($k) => $k !== $key);
+        $keys = array_filter($keys, fn ($k) => $k !== $key);
         Session::put($this->keysKey, $keys);
     }
 }

@@ -2,10 +2,10 @@
 
 namespace LarAgent;
 
-use LarAgent\Commands\AgentChatCommand;
-use LarAgent\Commands\MakeAgentCommand;
 use LarAgent\Commands\AgentChatClearCommand;
+use LarAgent\Commands\AgentChatCommand;
 use LarAgent\Commands\AgentChatRemoveCommand;
+use LarAgent\Commands\MakeAgentCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

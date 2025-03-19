@@ -58,8 +58,7 @@ class AgentChatCommand extends Command
     /**
      * Format and display the agent's response
      *
-     * @param mixed $response
-     * @return void
+     * @param  mixed  $response
      */
     protected function formatResponse($response): void
     {
@@ -68,27 +67,28 @@ class AgentChatCommand extends Command
             if (count($response) === 1 && isset(array_values($response)[0]) && is_array(array_values($response)[0])) {
                 $key = array_key_first($response);
                 $values = array_values($response)[0];
-                
+
                 if (array_is_list($values)) {
                     // If the first item is an object/array, use its keys as headers
-                    if (!empty($values) && is_array($values[0])) {
-                        $headers = array_keys((array)$values[0]);
-                        $rows = array_map(function($item) {
-                            return array_map(function($value) {
-                                return is_array($value) ? json_encode($value) : (string)$value;
-                            }, (array)$item);
+                    if (! empty($values) && is_array($values[0])) {
+                        $headers = array_keys((array) $values[0]);
+                        $rows = array_map(function ($item) {
+                            return array_map(function ($value) {
+                                return is_array($value) ? json_encode($value) : (string) $value;
+                            }, (array) $item);
                         }, $values);
-                        $this->info($key . ":");
+                        $this->info($key.':');
                         $this->table($headers, $rows);
                     } else {
                         // For simple arrays, show numbered list
-                        $this->info($key . ":");
-                        $this->table(['#', $key], array_map(fn($i, $item) => [$i + 1, $item], array_keys($values), $values));
+                        $this->info($key.':');
+                        $this->table(['#', $key], array_map(fn ($i, $item) => [$i + 1, $item], array_keys($values), $values));
                     }
+
                     return;
                 }
             }
-            
+
             // Otherwise format as JSON with proper indentation
             $this->line(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         } else {

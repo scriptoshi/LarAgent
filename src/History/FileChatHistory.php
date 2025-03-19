@@ -67,7 +67,7 @@ class FileChatHistory extends ChatHistory implements ChatHistoryInterface
             $keys = $this->loadKeysFromMemory();
 
             $key = $this->getIdentifier();
-            if (!in_array($key, $keys)) {
+            if (! in_array($key, $keys)) {
                 $keys[] = $key;
                 Storage::disk($this->disk)->put($keysPath, json_encode($keys, JSON_PRETTY_PRINT));
             }
@@ -81,11 +81,12 @@ class FileChatHistory extends ChatHistory implements ChatHistoryInterface
         try {
             $keysPath = $this->folder.'/'.$this->keysFile;
 
-            if (!Storage::disk($this->disk)->exists($keysPath)) {
+            if (! Storage::disk($this->disk)->exists($keysPath)) {
                 return [];
             }
 
             $content = Storage::disk($this->disk)->get($keysPath);
+
             return json_decode($content, true) ?? [];
         } catch (\Exception $e) {
             return [];
@@ -127,8 +128,8 @@ class FileChatHistory extends ChatHistory implements ChatHistoryInterface
     protected function removeChatKey(string $key): void
     {
         $keys = $this->loadKeysFromMemory();
-        $keys = array_filter($keys, fn($k) => $k !== $key);
-        
+        $keys = array_filter($keys, fn ($k) => $k !== $key);
+
         $keysPath = $this->folder.'/'.$this->keysFile;
         Storage::disk($this->disk)->put($keysPath, json_encode($keys, JSON_PRETTY_PRINT));
     }

@@ -25,7 +25,7 @@ abstract class ChatHistory implements ArrayAccess, ChatHistoryInterface
     {
         $this->name = $name;
         $this->readFromMemory();
-        
+
         $this->contextWindow = $options['context_window'] ?? 60000;
         $this->storeMeta = $options['store_meta'] ?? false;
         $this->saveChatKeys = $options['save_chat_keys'] ?? true;
@@ -131,7 +131,6 @@ abstract class ChatHistory implements ArrayAccess, ChatHistoryInterface
     abstract public function removeChatFromMemory(string $key): void;
 
     abstract protected function removeChatKey(string $key): void;
-
 
     // Token management methods
     public function setContextWindow(int $tokens): void

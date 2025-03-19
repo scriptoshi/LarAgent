@@ -127,7 +127,7 @@ it('excludes parallel_tool_calls from config when set to null', function () {
     $agent = LarAgent::setup($driver, $chatHistory);
 
     $agent->setParallelToolCalls(null);
-    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn() => 'test');
+    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn () => 'test');
     $agent->setTools([$tool]);
 
     $reflection = new ReflectionClass($agent);
@@ -137,7 +137,6 @@ it('excludes parallel_tool_calls from config when set to null', function () {
 
     expect($config)->not->toHaveKey('parallel_tool_calls');
 });
-
 
 it('uses developer role for instructions when enabled', function () {
     $driver = new FakeLlmDriver;

@@ -109,8 +109,9 @@ class Agent
 
     public function __construct($key)
     {
+        $this->setupProviderData();
         $this->setChatSessionId($key);
-        $this->setup();
+        $this->setupChatHistory();
         $this->onInitialize();
     }
 
@@ -616,11 +617,6 @@ class Agent
         });
     }
 
-    protected function setup(): void
-    {
-        $this->setupProviderData();
-        $this->setupChatHistory();
-    }
 
     protected function setupBeforeRespond(): void
     {

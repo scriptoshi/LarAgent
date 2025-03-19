@@ -8,6 +8,7 @@ use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 class InMemoryChatHistory extends ChatHistory implements ChatHistoryInterface
 {
     protected array $storage = [];
+
     protected array $keyStorage = [];
 
     public function readFromMemory(): void
@@ -23,7 +24,7 @@ class InMemoryChatHistory extends ChatHistory implements ChatHistoryInterface
     public function saveKeyToMemory(): void
     {
         $key = $this->getIdentifier();
-        if (!in_array($key, $this->keyStorage)) {
+        if (! in_array($key, $this->keyStorage)) {
             $this->keyStorage[] = $key;
         }
     }
@@ -41,6 +42,6 @@ class InMemoryChatHistory extends ChatHistory implements ChatHistoryInterface
 
     protected function removeChatKey(string $key): void
     {
-        $this->keyStorage = array_filter($this->keyStorage, fn($k) => $k !== $key);
+        $this->keyStorage = array_filter($this->keyStorage, fn ($k) => $k !== $key);
     }
 }

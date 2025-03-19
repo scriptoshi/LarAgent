@@ -45,12 +45,54 @@ class AgentChatCommand extends Command
             try {
                 $response = $agent->respond($message);
                 $this->line("\n<comment>{$agentName}:</comment>");
-                $this->line($response."\n");
+                $this->formatResponse($response);
+                $this->line("\n");
             } catch (\Exception $e) {
                 $this->error('Error: '.$e->getMessage());
 
                 return 1;
             }
+        }
+    }
+
+    /**
+     * Format and display the agent's response
+     *
+     * @param  mixed  $response
+     */
+    protected function formatResponse($response): void
+    {
+        if (is_array($response)) {
+            // Check if it's a single array with a key containing a list
+            if (count($response) === 1 && isset(array_values($response)[0]) && is_array(array_values($response)[0])) {
+                $key = array_key_first($response);
+                $values = array_values($response)[0];
+
+                if (array_is_list($values)) {
+                    // If the first item is an object/array, use its keys as headers
+                    if (! empty($values) && is_array($values[0])) {
+                        $headers = array_keys((array) $values[0]);
+                        $rows = array_map(function ($item) {
+                            return array_map(function ($value) {
+                                return is_array($value) ? json_encode($value) : (string) $value;
+                            }, (array) $item);
+                        }, $values);
+                        $this->info($key.':');
+                        $this->table($headers, $rows);
+                    } else {
+                        // For simple arrays, show numbered list
+                        $this->info($key.':');
+                        $this->table(['#', $key], array_map(fn ($i, $item) => [$i + 1, $item], array_keys($values), $values));
+                    }
+
+                    return;
+                }
+            }
+
+            // Otherwise format as JSON with proper indentation
+            $this->line(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        } else {
+            $this->line($response);
         }
     }
 }

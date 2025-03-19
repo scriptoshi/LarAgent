@@ -9,6 +9,7 @@ use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 class CacheChatHistory extends ChatHistory implements ChatHistoryInterface
 {
     protected ?string $store;
+
     protected string $keysKey = 'CacheChatHistory-keys';
 
     public function __construct(string $name, array $options = [])
@@ -37,7 +38,7 @@ class CacheChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         $keys = $this->loadKeysFromMemory();
         $key = $this->getIdentifier();
-        if (!in_array($key, $keys)) {
+        if (! in_array($key, $keys)) {
             $keys[] = $key;
             if ($this->store) {
                 Cache::store($this->store)->put($this->keysKey, $keys);
@@ -50,6 +51,7 @@ class CacheChatHistory extends ChatHistory implements ChatHistoryInterface
     public function loadKeysFromMemory(): array
     {
         $keys = $this->store ? Cache::store($this->store)->get($this->keysKey, []) : Cache::get($this->keysKey, []);
+
         return is_array($keys) ? $keys : [];
     }
 
@@ -66,8 +68,8 @@ class CacheChatHistory extends ChatHistory implements ChatHistoryInterface
     protected function removeChatKey(string $key): void
     {
         $keys = $this->loadKeysFromMemory();
-        $keys = array_filter($keys, fn($k) => $k !== $key);
-        
+        $keys = array_filter($keys, fn ($k) => $k !== $key);
+
         if ($this->store) {
             Cache::store($this->store)->put($this->keysKey, $keys);
         } else {

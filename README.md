@@ -808,7 +808,7 @@ protected $responseSchema = [
                 'description' => 'Temperature in degrees'
             ],
         ],
-        'required' => ['temperature']
+        'required' => ['temperature'],
         'additionalProperties' => false,
     ],
     'strict' => true,
@@ -847,7 +847,7 @@ public function structuredOutput()
                     'description' => '5-day forecast'
                 ]
             ],
-            'required' => ['temperature', 'conditions']
+            'required' => ['temperature', 'conditions'],
             'additionalProperties' => false,
         ],
         'strict' => true,
@@ -936,7 +936,7 @@ Driver that can be used with any OpenAI-compatible provider. For example configu
     'ollama' => [
         'name' => 'ollama-local',
         'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
-        'api_key' => '-',
+        'api_key' => 'ollama',
         'api_url' => "http://localhost:11434/v1",
         'default_context_window' => 50000,
         'default_max_completion_tokens' => 100,

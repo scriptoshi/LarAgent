@@ -20,6 +20,7 @@ class AgentChatClearCommand extends Command
             $agentClass = "\\App\\Agents\\{$agentName}";
             if (! class_exists($agentClass)) {
                 $this->error("Agent not found: {$agentName}");
+
                 return 1;
             }
         }
@@ -28,7 +29,7 @@ class AgentChatClearCommand extends Command
         $agent = $agentClass::for('temp');
         $chatKeys = $agent->getChatKeys();
 
-        if (!empty($chatKeys)) {
+        if (! empty($chatKeys)) {
             // Clear each chat history
             foreach ($chatKeys as $key) {
                 // Create new chat history with save_chat_keys disabled
@@ -39,6 +40,7 @@ class AgentChatClearCommand extends Command
         }
 
         $this->info("Successfully cleared chat history for agent: {$agentName}");
+
         return 0;
     }
 }

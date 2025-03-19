@@ -20,6 +20,7 @@ class AgentChatRemoveCommand extends Command
             $agentClass = "\\App\\Agents\\{$agentName}";
             if (! class_exists($agentClass)) {
                 $this->error("Agent not found: {$agentName}");
+
                 return 1;
             }
         }
@@ -28,15 +29,15 @@ class AgentChatRemoveCommand extends Command
         $agent = $agentClass::for('temp');
         $chatKeys = $agent->getChatKeys();
 
-        if (!empty($chatKeys)) {
+        if (! empty($chatKeys)) {
             // Remove each chat history
-            $this->info("Found ".count($chatKeys)." chat histories to remove...");
-            
+            $this->info('Found '.count($chatKeys).' chat histories to remove...');
+
             foreach ($chatKeys as $key) {
                 $this->line("Removing chat history: {$key}");
                 $agent->chatHistory()->removeChatFromMemory($key);
             }
-            
+
             $this->info("Successfully removed all chat histories for agent: {$agentName}");
         } else {
             $this->info("No chat histories found for agent: {$agentName}");

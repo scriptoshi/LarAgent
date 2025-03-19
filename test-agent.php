@@ -59,7 +59,6 @@ enum Unit: string
 
 class WeatherAgent extends LarAgent\Agent
 {
-
     protected $provider = 'default';
 
     protected $model = 'o1-2024-12-17';

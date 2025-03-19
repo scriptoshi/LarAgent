@@ -137,16 +137,16 @@ it('can handle image urls in response', function () {
 
 it('can dynamically change model', function () {
     $agent = new TestAgent('test_session');
-    
+
     // Check default model
     expect($agent->model())->toBe('gpt-4o-mini');
-    
+
     // Change model dynamically
     $agent->withModel('gpt-3.5-turbo');
-    
+
     // Verify model was changed
     expect($agent->model())->toBe('gpt-3.5-turbo');
-    
+
     // Verify chainable method returns agent instance
     expect($agent->withModel('gpt-4'))->toBeInstanceOf(Agent::class);
 });
@@ -185,10 +185,10 @@ it('can get chat keys filtered by agent class', function () {
 it('can add custom message to chat history', function () {
     $agent = TestAgent::for('test_key');
     $systemMessage = Message::system('Test system message');
-    
+
     $agent->addMessage($systemMessage);
     $messages = $agent->chatHistory()->getMessages();
-    
+
     expect($messages)->toContain($systemMessage);
 });
 
@@ -198,10 +198,10 @@ it('excludes parallel_tool_calls from config when set to null', function () {
     $parallelToolCalls = $reflection->getProperty('parallelToolCalls');
     $parallelToolCalls->setAccessible(true);
     $parallelToolCalls->setValue($agent, null);
-    
-    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn() => 'test');
+
+    $tool = Tool::create('test_tool', 'Test tool')->setCallback(fn () => 'test');
     $agent->withTool($tool);
-    
+
     $buildConfigsForLaragent = $reflection->getMethod('buildConfigsForLaragent');
     $buildConfigsForLaragent->setAccessible(true);
     $config = $buildConfigsForLaragent->invoke($agent);
@@ -212,12 +212,12 @@ it('excludes parallel_tool_calls from config when set to null', function () {
 
 it('uses developer role for instructions when enabled', function () {
     $agent = new TestAgent('test_session');
-    
+
     $reflection = new ReflectionClass($agent);
     $parallelToolCalls = $reflection->getProperty('developerRoleForInstructions');
     $parallelToolCalls->setAccessible(true);
     $parallelToolCalls->setValue($agent, true);
-    
+
     $agent->respond('Test message');
 
     $messages = $agent->chatHistory()->getMessages();

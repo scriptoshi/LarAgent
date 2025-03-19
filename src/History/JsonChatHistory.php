@@ -8,6 +8,7 @@ use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 class JsonChatHistory extends ChatHistory implements ChatHistoryInterface
 {
     protected string $folder = '';
+
     protected string $keysFile = 'JsonChatHistory-keys.json';
 
     public function __construct(string $name, array $options = [])
@@ -51,7 +52,7 @@ class JsonChatHistory extends ChatHistory implements ChatHistoryInterface
         $keys = $this->loadKeysFromMemory();
 
         $key = $this->getIdentifier();
-        if (!in_array($key, $keys)) {
+        if (! in_array($key, $keys)) {
             $keys[] = $key;
             file_put_contents($keysPath, json_encode($keys));
         }
@@ -61,11 +62,12 @@ class JsonChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         $keysPath = $this->folder.'/'.$this->keysFile;
 
-        if (!file_exists($keysPath)) {
+        if (! file_exists($keysPath)) {
             return [];
         }
 
         $content = file_get_contents($keysPath);
+
         return json_decode($content, true) ?? [];
     }
 
@@ -102,8 +104,8 @@ class JsonChatHistory extends ChatHistory implements ChatHistoryInterface
     protected function removeChatKey(string $key): void
     {
         $keys = $this->loadKeysFromMemory();
-        $keys = array_filter($keys, fn($k) => $k !== $key);
-        
+        $keys = array_filter($keys, fn ($k) => $k !== $key);
+
         $keysPath = $this->folder.'/'.$this->keysFile;
         file_put_contents($keysPath, json_encode($keys));
     }

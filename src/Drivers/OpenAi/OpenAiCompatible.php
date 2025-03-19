@@ -148,10 +148,11 @@ class OpenAiCompatible extends LlmDriver implements LlmDriverInterface
     protected function buildClient(string $apiKey, string $baseUrl): mixed
     {
         $client = OpenAI::factory()
-        ->withApiKey($apiKey)
-        ->withBaseUri($baseUrl)
-        ->withHttpClient($httpClient = new \GuzzleHttp\Client([]))
-        ->make();
+            ->withApiKey($apiKey)
+            ->withBaseUri($baseUrl)
+            ->withHttpClient($httpClient = new \GuzzleHttp\Client([]))
+            ->make();
+
         return $client;
     }
 }

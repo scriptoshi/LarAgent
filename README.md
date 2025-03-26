@@ -550,8 +550,8 @@ use LarAgent\Tool;
 // ...
 public function registerTools() 
 {
+    $user = auth()->user();
     return [
-        $user = auth()->user();
         Tool::create("user_location", "Returns user's current location")
              ->setCallback(function () use ($user) {
                   return $user->location()->city;

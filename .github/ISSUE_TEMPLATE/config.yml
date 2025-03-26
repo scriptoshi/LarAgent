@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Ask a question
-    url: https://github.com/maestroerror/LarAgent/discussions/new?category=q-a
+    url: https://discord.gg/XMFZAc8K
     about: Ask the community for help
   - name: Discuss Feature Ideas
-    url: https://reddit.com/r/LarAgent
-    about: Share and discuss your ideas in our subreddit first
+    url: https://discord.gg/XMFZAc8K
+    about: Share and discuss your ideas in our Discord first

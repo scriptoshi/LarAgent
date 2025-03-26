@@ -11,7 +11,7 @@ return [
             'name' => 'openai',
             'api_key' => env('OPENAI_API_KEY'),
             'default_context_window' => 50000,
-            'default_max_completion_tokens' => 100,
+            'default_max_completion_tokens' => 10000,
             'default_temperature' => 1,
         ],
     ],

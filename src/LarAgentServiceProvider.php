@@ -9,8 +9,6 @@ use LarAgent\Commands\AgentChatRemoveCommand;
 use LarAgent\Commands\MakeAgentCommand;
 use LarAgent\Core\Contracts\ChatHistory;
 use LarAgent\Core\Contracts\LlmDriver;
-use LarAgent\History\InMemoryChatHistory;
-use LarAgent\Drivers\OpenAi\OpenAiCompatible;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -42,7 +40,7 @@ class LarAgentServiceProvider extends PackageServiceProvider
         $this->app->singleton(LlmDriver::class, function ($app) {
             $config = $app['config']->get('laragent.providers.default');
             $defaultDriver = $app['config']->get('laragent.default_driver');
-            
+
             return new $defaultDriver($config);
         });
 

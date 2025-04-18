@@ -170,6 +170,8 @@ Stay tuned! We're constantly working on making LarAgent the most versatile AI ag
 
 ## Table of Contents
 
+#### 📚 We're working hard on the official documentation website. Thanks for your patience and support!
+
 - [📖 Introduction](#introduction)
 - [🚀 Getting Started](#getting-started)
   - [Requirements](#requirements)
@@ -233,7 +235,7 @@ return [
     'providers' => [
 
         'default' => [
-            'name' => 'openai',
+            'label' => 'openai',
             'api_key' => env('OPENAI_API_KEY'),
             'default_context_window' => 50000,
             'default_max_completion_tokens' => 100,
@@ -252,7 +254,7 @@ You can configure the package by editing the `config/laragent.php` file. Here is
     // Example custom provider with all possible configurations
     'custom_provider' => [
         // Just name for reference, changes nothing
-        'name' => 'mini',
+        'label' => 'mini',
         'model' => 'gpt-3.5-turbo',
         'api_key' => env('CUSTOM_API_KEY'),
         'api_url' => env('CUSTOM_API_URL'),
@@ -904,7 +906,7 @@ You can use the drivers by setting them in the configuration file:
 ```php
 'providers' => [
     'default' => [
-        'name' => 'openai',
+        'label' => 'openai',
         'api_key' => env('OPENAI_API_KEY'),
         // ...
         'driver' => \LarAgent\Drivers\OpenAi\OpenAiDriver::class,
@@ -934,7 +936,7 @@ Driver that can be used with any OpenAI-compatible provider. For example configu
 'providers' => [
 
     'ollama' => [
-        'name' => 'ollama-local',
+        'label' => 'ollama-local',
         'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
         'api_key' => 'ollama',
         'api_url' => "http://localhost:11434/v1",
@@ -951,7 +953,7 @@ Or any other LLM API which uses the same standards as OpenAI, such as **OpenRout
 'providers' => [
 
     'openrouter' => [
-        'name' => 'some-label', // Name is only for internal use like a label, you can use any name
+        'label' => 'some-label', // Name is only for internal use like a label, you can use any name
         'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
         'api_key' => env('OPENROUTER_API_KEY'),
         'api_url' => "https://api.openrouter.ai/api/v1",

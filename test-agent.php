@@ -12,7 +12,7 @@ function config(string $key): mixed
         'laragent.default_driver' => LarAgent\Drivers\OpenAi\OpenAiDriver::class,
         'laragent.default_chat_history' => LarAgent\History\InMemoryChatHistory::class,
         'laragent.providers.default' => [
-            'name' => 'openai',
+            'label' => 'openai',
             'model' => 'gpt-4o',
             'api_key' => $yourApiKey,
             'default_context_window' => 50000,

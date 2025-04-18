@@ -10,6 +10,7 @@ use LarAgent\Commands\MakeAgentCommand;
 use LarAgent\Core\Contracts\ChatHistory;
 use LarAgent\Core\Contracts\LlmDriver;
 use LarAgent\History\InMemoryChatHistory;
+use LarAgent\Drivers\OpenAi\OpenAiCompatible;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -40,14 +41,16 @@ class LarAgentServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(LlmDriver::class, function ($app) {
             $config = $app['config']->get('laragent.providers.default');
-
-            return new OpenAiCompatible($config);
+            $defaultDriver = $app['config']->get('laragent.default_driver');
+            
+            return new $defaultDriver($config);
         });
 
         $this->app->bind(ChatHistory::class, function ($app) {
             $name = Str::random(10);
+            $defaultChatHistory = $app['config']->get('laragent.default_chat_history');
 
-            return new InMemoryChatHistory($name, []);
+            return new $defaultChatHistory($name, []);
         });
     }
 }

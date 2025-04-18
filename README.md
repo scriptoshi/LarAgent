@@ -170,6 +170,8 @@ Stay tuned! We're constantly working on making LarAgent the most versatile AI ag
 
 ## Table of Contents
 
+#### 📚 We're working hard on the official documentation website. Thanks for your patience and support!
+
 - [📖 Introduction](#introduction)
 - [🚀 Getting Started](#getting-started)
   - [Requirements](#requirements)

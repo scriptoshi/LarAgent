@@ -7,6 +7,7 @@ return [
 
     'providers' => [
 
+        // Always keep at least one provider named 'default'
         'default' => [
             'name' => 'openai',
             'api_key' => env('OPENAI_API_KEY'),

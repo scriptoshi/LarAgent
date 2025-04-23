@@ -1,13 +1,41 @@
 <?php
 
+use LarAgent\Core\Contracts\LlmDriver;
 use LarAgent\Tests\Fakes\FakeWeatherService;
 use LarAgent\Tool;
+use Mockery;
 
 // Test function
 function getWeather($location)
 {
     return "Weather for {$location}";
 }
+
+// Create a mock LlmDriver for testing
+beforeEach(function () {
+    $mockDriver = Mockery::mock(LlmDriver::class);
+    $mockDriver->shouldReceive('formatToolForPayload')
+        ->andReturnUsing(function ($tool) {
+            return [
+                'type' => 'function',
+                'function' => [
+                    'name' => $tool->getName(),
+                    'description' => $tool->getDescription(),
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => $tool->getProperties(),
+                        'required' => $tool->getRequired(),
+                    ],
+                ],
+            ];
+        });
+    
+    app()->instance(LlmDriver::class, $mockDriver);
+});
+
+afterEach(function () {
+    Mockery::close();
+});
 
 it('can create a tool with name and description', function () {
     $tool = Tool::create('get_current_weather', 'Get the current weather in a given location');

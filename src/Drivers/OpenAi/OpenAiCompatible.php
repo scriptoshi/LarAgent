@@ -59,7 +59,7 @@ class OpenAiCompatible extends LlmDriver implements LlmDriverInterface
                 if (empty($tool->getProperties())) {
                     $tool->addProperty('no_properties', ['string', 'null'], 'empty');
                 }
-                $payload['tools'][] = $tool->toArray();
+                $payload['tools'][] = $this->formatToolForPayload($tool);
             }
         }
 

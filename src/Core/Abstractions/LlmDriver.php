@@ -67,7 +67,7 @@ abstract class LlmDriver implements LlmDriverInterface
 
     protected function getRegisteredFunctions(): array
     {
-        return array_map(fn (ToolInterface $tool) => $tool->toArray(), $this->tools);
+        return array_map(fn (ToolInterface $tool) => $this->formatToolForPayload($tool), $this->tools);
     }
 
     public function structuredOutputEnabled(): bool
@@ -83,6 +83,28 @@ abstract class LlmDriver implements LlmDriverInterface
     public function __construct(array $settings = [])
     {
         $this->settings = $settings;
+    }
+
+    /**
+     * Format a tool for the API payload.
+     * This method defines the structure of a tool for the specific LLM API.
+     * Override this method in driver implementations to customize the tool format.
+     */
+    public function formatToolForPayload(ToolInterface $tool): array
+    {
+        // Default OpenAI-compatible format
+        return [
+            'type' => 'function',
+            'function' => [
+                'name' => $tool->getName(),
+                'description' => $tool->getDescription(),
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => $tool->getProperties(),
+                    'required' => $tool->getRequired(),
+                ],
+            ],
+        ];
     }
 
     abstract public function toolResultToMessage(ToolCallInterface $toolCall, mixed $result): array;

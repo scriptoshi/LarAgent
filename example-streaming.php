@@ -2,7 +2,6 @@
 
 require_once __DIR__.'/vendor/autoload.php';
 
-use LarAgent\Drivers\OpenAi\OpenAiDriver;
 use LarAgent\Drivers\OpenAi\OpenAiCompatible;
 use LarAgent\LarAgent;
 use LarAgent\Messages\StreamedAssistantMessage;
@@ -22,14 +21,14 @@ $streamCallback = function ($message) {
     if ($message instanceof StreamedAssistantMessage) {
         // For regular content messages
         echo $message->getLastChunk();
-        
+
         // Check if this is the final message with usage information
         if ($message->isComplete() && $message->getUsage()) {
-            echo "Stream complete! Usage: " . json_encode($message->getUsage()) . PHP_EOL;
+            echo 'Stream complete! Usage: '.json_encode($message->getUsage()).PHP_EOL;
         }
     } elseif ($message instanceof ToolCallMessage) {
         // For tool call messages
-        echo "Received tool call: " . json_encode($message->getToolCalls()) . PHP_EOL;
+        echo 'Received tool call: '.json_encode($message->getToolCalls()).PHP_EOL;
     }
 };
 
@@ -40,7 +39,7 @@ $messages = [
 ];
 
 // Use the streaming method directly from the driver
-echo "Starting stream..." . PHP_EOL;
+echo 'Starting stream...'.PHP_EOL;
 
 $stream = $driver->sendMessageStreamed($messages, ['model' => 'gpt-4o-mini'], $streamCallback);
 
@@ -49,4 +48,4 @@ foreach ($stream as $chunk) {
     // The callback will handle the output, but you could do additional processing here
 }
 
-echo "Stream finished!" . PHP_EOL;
+echo 'Stream finished!'.PHP_EOL;

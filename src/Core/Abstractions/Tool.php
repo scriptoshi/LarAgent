@@ -87,7 +87,7 @@ abstract class Tool implements ToolInterface
     {
         // Get the LlmDriver instance from the container
         $driver = app()->make(\LarAgent\Core\Contracts\LlmDriver::class);
-        
+
         // Use the driver's format for the tool
         return $driver->formatToolForPayload($this);
     }

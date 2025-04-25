@@ -29,7 +29,7 @@ beforeEach(function () {
                 ],
             ];
         });
-    
+
     app()->instance(LlmDriver::class, $mockDriver);
 });
 

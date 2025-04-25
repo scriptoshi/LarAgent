@@ -1,16 +1,16 @@
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use LarAgent\Drivers\OpenAi\OpenAiCompatible;
 use LarAgent\LarAgent;
 use LarAgent\Messages\StreamedAssistantMessage;
 use LarAgent\Messages\ToolCallMessage;
 
-// Example of using streaming with LarAgent
+// Example of using streaming only with Driver, instead of LarAgent class
 
 // Initialize OpenAI driver with your API key
-$yourApiKey = include 'openai-api-key.php';
+$yourApiKey = include __DIR__.'/../openai-api-key.php';
 $driver = new OpenAiCompatible([
     'api_key' => $yourApiKey,
     'model' => 'gpt-4o-mini', // or any other model that supports streaming

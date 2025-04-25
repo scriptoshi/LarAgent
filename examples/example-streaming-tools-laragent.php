@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__.'/vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use LarAgent\Drivers\OpenAi\OpenAiCompatible;
 use LarAgent\Drivers\OpenAi\OpenAiDriver;
@@ -15,7 +15,7 @@ $config = [
 ];
 
 // Setup
-$yourApiKey = include 'openai-api-key.php';
+$yourApiKey = include __DIR__.'/../openai-api-key.php';
 $driver = new OpenAiDriver(['api_key' => $yourApiKey]);
 // $driver = new OpenAiCompatible(['api_key' => $yourApiKey]);
 
@@ -61,7 +61,7 @@ $agent->withMessage($userMessage);
 function handleStreamingChunk($chunk)
 {
     try {
-        // Handle tool calls
+        // Skip tool call messages (LarAgent will handle it)
         if ($chunk instanceof \LarAgent\Messages\ToolCallMessage) {
             return;
         }

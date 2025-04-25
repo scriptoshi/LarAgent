@@ -1,6 +1,7 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
+
 
 use LarAgent\LarAgent;
 use LarAgent\Message;
@@ -16,7 +17,7 @@ $config = [
 ];
 
 // Setup
-$yourApiKey = include 'openai-api-key.php';
+$yourApiKey = include __DIR__.'/../openai-api-key.php';
 $driver = new OpenAiDriver(['api_key' => $yourApiKey]);
 // Uncomment to test with OpenAI compatible driver
 // $driver = new OpenAiCompatible(['api_key' => $yourApiKey, 'api_url' => 'https://api.openai.com/v1']);
@@ -73,12 +74,12 @@ try {
         if ($_ instanceof StreamedAssistantMessage) {
             echo $_->getLastChunk();
         } else {
-            // The last message is array in case on structured output
-            echo '\n\n';
+            // The last message is array in case of structured output
+            echo "\n\n";
             echo 'Structured Output:';
+            echo "\n";
             var_dump($_);
         }
-        // The callback handles the output
     }
 
     echo "\n\n✅ Streaming completed\n";

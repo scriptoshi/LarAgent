@@ -163,3 +163,88 @@ it('uses developer role for instructions when enabled', function () {
     }
     expect($hasDevMessage)->toBeTrue();
 });
+
+it('can stream messages using generator', function () {
+    $driver = new FakeLlmDriver();
+    $chatHistory = new InMemoryChatHistory('test-chat-history');
+    $agent = LarAgent::setup($driver, $chatHistory);
+
+    // Prepare a mock response
+    $driver->addMockResponse('stop', [
+        'content' => 'This is a streaming response',
+        'metaData' => [
+            'usage' => [
+                'prompt_tokens' => 10,
+                'completion_tokens' => 20,
+                'total_tokens' => 30,
+            ],
+        ],
+    ]);
+
+    // Set the message
+    $agent->withMessage(Message::user('Test message'));
+    
+    // Run with streaming enabled
+    $messages = [];
+    $stream = $agent->runStreamed();
+    
+    foreach ($stream as $message) {
+        $messages[] = $message;
+    }
+    
+    expect($messages)->not->toBeEmpty();
+    $lastMessage = end($messages);
+    expect($lastMessage->getContent())->toBe('This is a streaming response');
+});
+
+it('can enable streaming mode and process streamed responses', function () {
+    $driver = new FakeLlmDriver();
+    $chatHistory = new InMemoryChatHistory('test-chat-history');
+    $agent = LarAgent::setup($driver, $chatHistory);
+
+    // Prepare a mock response
+    $driver->addMockResponse('stop', [
+        'content' => 'This is a streaming response',
+        'metaData' => [
+            'usage' => [
+                'prompt_tokens' => 10,
+                'completion_tokens' => 20,
+                'total_tokens' => 30,
+            ],
+        ],
+    ]);
+
+    // Set the message
+    $userMessage = Message::user('Test message');
+    $agent->withMessage($userMessage);
+    
+    // Enable streaming with a callback
+    $receivedChunks = [];
+    $stream = $agent->runStreamed(function ($chunk) use (&$receivedChunks) {
+        $receivedChunks[] = $chunk;
+    });
+    
+    // Verify the response is a Generator
+    expect($stream)->toBeInstanceOf(\Generator::class);
+    
+    // Collect all messages from the stream
+    $messages = [];
+    foreach ($stream as $message) {
+        $messages[] = $message;
+    }
+    
+    // Verify we received at least one message
+    expect($messages)->not->toBeEmpty();
+    
+    // Verify the callback was called
+    expect($receivedChunks)->not->toBeEmpty();
+    
+    // Verify the last message contains the expected content
+    $lastMessage = end($messages);
+    expect($lastMessage->getContent())->toBe('This is a streaming response');
+    
+    // Verify the message was added to chat history
+    $historyMessages = $chatHistory->getMessages();
+    expect($historyMessages)->toHaveCount(2); // User message + assistant response
+    expect(end($historyMessages)->getContent())->toBe('This is a streaming response');
+});

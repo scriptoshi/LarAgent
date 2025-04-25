@@ -43,6 +43,12 @@ class LarAgent
     /** @var string|array|null */
     protected $toolChoice = null;
 
+    /** @var bool Enable streaming mode */
+    protected bool $streaming = false;
+
+    /** @var callable|null Callback function for streaming */
+    protected $streamCallback = null;
+
     // Config methods
 
     public function getModel(): string
@@ -234,6 +240,55 @@ class LarAgent
         return $this->toolChoice;
     }
 
+    /**
+     * Enable or disable streaming mode
+     *
+     * @param bool $streaming Whether to enable streaming
+     * @param callable|null $callback Optional callback function to process each chunk
+     * @return $this
+     */
+    public function streaming(bool $streaming = true, ?callable $callback = null): self
+    {
+        $this->streaming = $streaming;
+        if ($callback !== null) {
+            $this->streamCallback = $callback;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check if streaming is enabled
+     *
+     * @return bool
+     */
+    public function isStreaming(): bool
+    {
+        return $this->streaming;
+    }
+
+    /**
+     * Get the streaming callback function
+     *
+     * @return callable|null
+     */
+    public function getStreamCallback(): ?callable
+    {
+        return $this->streamCallback;
+    }
+
+    public function getParallelToolCalls(): ?bool
+    {
+        return $this->parallelToolCalls;
+    }
+
+    public function setParallelToolCalls(?bool $parallelToolCalls): self
+    {
+        $this->parallelToolCalls = $parallelToolCalls;
+
+        return $this;
+    }
+
     // Main API methods
 
     public function __construct(LlmDriverInterface $driver, ChatHistoryInterface $chatHistory)
@@ -280,22 +335,128 @@ class LarAgent
         return $this->tools;
     }
 
-    public function getParallelToolCalls(): ?bool
-    {
-        return $this->parallelToolCalls;
-    }
-
-    public function setParallelToolCalls(?bool $parallelToolCalls): self
-    {
-        $this->parallelToolCalls = $parallelToolCalls;
-
-        return $this;
-    }
-
     // Execution method
     public function run(): MessageInterface|array|null
     {
+        // Prepare the agent for execution
+        if ($this->prepareExecution() === false) {
+            return null;
+        }
 
+        // Use regular mode
+        $response = $this->send($this->message);
+        
+        // Process the response with common post-processing logic
+        return $this->processResponse($response);
+    }
+
+    /**
+     * Run the agent with streaming enabled.
+     *
+     * @param callable|null $callback Optional callback function to process each chunk
+     * @return \Generator A generator that yields chunks of the response
+     */
+    public function runStreamed(?callable $callback = null): \Generator
+    {
+        // Enable streaming mode if not already enabled
+        if (!$this->isStreaming()) {
+            $this->streaming(true, $callback);
+        }
+        
+        // Prepare the agent for execution
+        if ($this->prepareExecution() === false) {
+            // Return an empty generator when execution is stopped
+            return (function () { yield from []; })();
+        }
+        
+        // Use streaming mode
+        $streamGenerator = $this->stream($this->message, $this->getStreamCallback());
+        
+        // Reset message to null to skip adding it again in chat history
+        $this->message = null;
+        
+        // Return the stream generator
+        return $streamGenerator;
+    }
+
+    /**
+     * Stream a message to the LLM and receive a streamed response.
+     *
+     * @param MessageInterface|null $message The message to send
+     * @param callable|null $callback Optional callback function to process each chunk
+     * @return \Generator A generator that yields chunks of the response
+     */
+    protected function stream(?MessageInterface $message = null, ?callable $callback = null): \Generator
+    {
+        // Create a user message if provided
+        if ($message !== null) {
+            $this->chatHistory->addMessage($message);
+        }
+
+        // Before response (Before sending message to LLM)
+        // If any callback will return false, it will stop the process silently
+        if ($this->processBeforeResponse($this->chatHistory, $message) === false) {
+            return;
+        }
+
+        // Get the streamed response
+        $stream = $this->driver->sendMessageStreamed(
+            $this->chatHistory->toArray(),
+            $this->buildConfig(),
+            $callback
+        );
+
+        // Keep track of the final message to add to chat history
+        $finalMessage = null;
+        $toolCallProcessed = false;
+
+        // Process each chunk of the stream
+        foreach ($stream as $chunk) {
+            $finalMessage = $chunk;
+            
+            // // If this is a tool call message, process it here instead of in processResponse
+            // if ($chunk instanceof ToolCallMessage && !$toolCallProcessed) {
+            //     // Mark as processed to prevent infinite recursion
+            //     $toolCallProcessed = true;
+                
+            //     // Add the tool call message to chat history
+            //     $this->chatHistory->addMessage($chunk);
+                
+            //     // Process the tool calls
+            //     $this->processTools($chunk);
+                
+            //     // Continue yielding the chunk
+            // }
+            
+            // Yield the chunk to the caller
+            yield $chunk;
+        }
+
+        // Add the final message to chat history if it exists
+        if ($finalMessage) {
+            $this->processAfterResponse($finalMessage);
+            $this->chatHistory->addMessage($finalMessage);
+            
+            // Process the final message with common post-processing logic
+            $processedResponse = $this->processResponse($finalMessage);
+            
+            // If the response is a generator (from a tool call that triggered another stream),
+            // yield its chunks
+            if ($processedResponse instanceof \Generator) {
+                foreach ($processedResponse as $chunk) {
+                    yield $chunk;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Prepare the agent for execution by handling instructions, tools, and response schema.
+     *
+     * @return bool False if execution should be stopped, true otherwise
+     */
+    protected function prepareExecution(): bool
+    {
         // Manage instructions
         $totalMessages = $this->chatHistory->count();
 
@@ -306,9 +467,10 @@ class LarAgent
             $iip = $this->getReinjectInstuctionsPer();
             if ($iip && $iip > 0 && $totalMessages % $iip > 0 && $totalMessages % $iip <= 5) {
                 // If any callback returns false, it will stop the process silently
-                if ($this->processBeforeReinjectingInstructions($this->chatHistory) !== false) {
-                    $this->injectInstructions();
+                if ($this->processBeforeReinjectingInstructions($this->chatHistory) === false) {
+                    return false;
                 }
+                $this->injectInstructions();
             }
         }
 
@@ -326,47 +488,10 @@ class LarAgent
 
         // Before send (Before adding message in chat history)
         if ($this->processBeforeSend($this->chatHistory, $this->getCurrentMessage()) === false) {
-            return null;
+            return false;
         }
-
-        // Send message
-        $response = $this->send($this->message);
-
-        // After send (After adding LLM response to Chat history)
-        if ($this->processAfterSend($this->chatHistory, $response) === false) {
-            return null;
-        }
-
-        // if response execution is interrupted by a callback
-        if (! $response) {
-            return null;
-        }
-
-        if ($response instanceof ToolCallMessage) {
-            // Process tool
-            $this->processTools($response);
-            // Set message to null to skip adding it again in chat history
-            $this->message = null;
-
-            return $this->run();
-        }
-
-        // Before saving chat history
-        $this->processBeforeSaveHistory($this->chatHistory);
-        // Save chat history to memory
-        $this->chatHistory->writeToMemory();
-
-        if ($this->driver->structuredOutputEnabled()) {
-            $array = json_decode($response->getContent(), true);
-            // Before structured output response
-            if ($this->processBeforeStructuredOutput($array) === false) {
-                return null;
-            }
-
-            return $array;
-        } else {
-            return $response;
-        }
+        
+        return true;
     }
 
     // Helper methods
@@ -388,6 +513,51 @@ class LarAgent
         $this->processAfterResponse($response);
         $this->chatHistory->addMessage($response);
 
+        // Process the response with common post-processing logic
+        return $response;
+    }
+    
+    /**
+     * Process a response message with common post-processing logic.
+     *
+     * @param MessageInterface $response The response message to process
+     * @return MessageInterface|array|null|\Generator The processed response
+     */
+    protected function processResponse(MessageInterface $response): MessageInterface|array|null|\Generator
+    {
+        // After send (After adding LLM response to Chat history)
+        if ($this->processAfterSend($this->chatHistory, $response) === false) {
+            return null;
+        }
+        
+        // Process tools if the response is a tool call
+        if ($response instanceof ToolCallMessage) {
+            
+            $this->processTools($response);
+            
+            // Continue the conversation with tool results
+            // @todo fix infinitie loop while streaming + tools
+            if ($this->isStreaming()) {
+                return $this->runStreamed();
+            }
+            return $this->run();
+        }
+        
+        // Before saving chat history
+        $this->processBeforeSaveHistory($this->chatHistory);
+        // Save chat history to memory
+        $this->chatHistory->writeToMemory();
+        
+        if ($this->driver->structuredOutputEnabled()) {
+            $array = json_decode($response->getContent(), true);
+            // Before structured output response
+            if ($this->processBeforeStructuredOutput($array) === false) {
+                return null;
+            }
+            
+            return $array;
+        }
+        
         return $response;
     }
 
@@ -433,6 +603,7 @@ class LarAgent
             }
             $this->chatHistory->addMessage($result);
         }
+
     }
 
     protected function processToolCall(ToolCallInterface $toolCall): ?ToolResultMessage
@@ -455,5 +626,16 @@ class LarAgent
         $messageArray = $this->driver->toolResultToMessage($toolCall, $result);
 
         return new ToolResultMessage($messageArray);
+    }
+
+    /**
+     * Create a user message from a string
+     *
+     * @param string $content The message content
+     * @return MessageInterface The created user message
+     */
+    protected function createUserMessage(string $content): MessageInterface
+    {
+        return Message::user($content);
     }
 }

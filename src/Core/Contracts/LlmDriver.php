@@ -75,6 +75,17 @@ interface LlmDriver
     public function getLastResponse(): ?array;
 
     /**
+     * Send a message or prompt to the LLM and receive a streamed response.
+     *
+     * @param  array  $messages  Array of messages in the format:
+     *                           ['role' => 'user|system|assistant', 'content' => '...']
+     * @param  array  $options  Additional options like temperature, max_tokens, etc.
+     * @param  callable|null  $callback  Optional callback function to process each chunk of the stream
+     * @return \Generator A generator that yields chunks of the response
+     */
+    public function sendMessageStreamed(array $messages, array $options = [], ?callable $callback = null): \Generator;
+
+    /**
      * Get the provider data merged with the model defined settings.
      * Model settings override provider settings.
      *

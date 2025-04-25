@@ -52,6 +52,7 @@ class WeatherTool extends LarAgent\Tool
     {
         // Simulate weather API call
         $temperature = rand(10, 30);
+
         return "The weather in {$input['location']} is {$temperature} degrees {$input['unit']}";
     }
 }
@@ -93,7 +94,7 @@ class WeatherAgent extends LarAgent\Agent
     {
         $user = ['name' => 'John', 'age' => 25];
 
-        return 
+        return
             "You are a weather agent providing information about weather in any city.
             Always use the user's name ({$user['name']}) while responding.
             Be concise and friendly in your responses.";
@@ -137,6 +138,7 @@ class WeatherAgent extends LarAgent\Agent
     public function weatherTool($location, $unit = 'celsius')
     {
         $temperature = 20;
+
         return "The weather in {$location} is {$temperature} degrees {$unit}";
     }
 
@@ -147,6 +149,7 @@ class WeatherAgent extends LarAgent\Agent
     public static function weatherToolForNewYork(Unit $unit)
     {
         $temperature = 18;
+
         return "The weather in New York is {$temperature} degrees {$unit->value}";
     }
 }
@@ -156,19 +159,19 @@ echo "🚀 Running LarAgent with Agent class approach...\n\n";
 
 // Example 1: Basic question
 echo "💬 User: What's the weather like in Boston and Los Angeles? I prefer fahrenheit\n";
-echo "🤖 Response: ";
+echo '🤖 Response: ';
 echo WeatherAgent::for('example_chat')->respond('What\'s the weather like in Boston and Los Angeles? I prefer fahrenheit');
 echo "\n\n";
 
 // Example 2: Using enum parameter
 echo "💬 User: Thanks for the info. What about New York? I prefer celsius\n";
-echo "🤖 Response: ";
+echo '🤖 Response: ';
 echo WeatherAgent::for('example_chat')->respond('Thanks for the info. What about New York? I prefer celsius');
 echo "\n\n";
 
 // Example 3: Using user location tool
 echo "💬 User: Where am I now?\n";
-echo "🤖 Response: ";
+echo '🤖 Response: ';
 echo WeatherAgent::for('example_chat')->message('Where am I now?')->respond();
 echo "\n\n";
 

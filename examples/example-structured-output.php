@@ -84,7 +84,7 @@ $agent->afterToolExecution(function ($agent, $tool, &$result) {
 
 // Add a hook to log token usage after each response
 $agent->afterSend(function ($agent, $history, $message) use ($chatKey) {
-    if (!($message instanceof ToolCallMessage)) {
+    if (! ($message instanceof ToolCallMessage)) {
         $usage = $message->getMetadata()['usage'];
         echo "📊 {$usage->totalTokens} tokens used in chat: {$chatKey}\n";
     }

@@ -526,7 +526,7 @@ class LarAgent
 
             return $this->run();
         }
-        
+
         // Hook: Before saving chat history
         $this->processBeforeSaveHistory($this->chatHistory);
         // Save chat history to memory

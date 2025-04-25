@@ -243,8 +243,8 @@ class LarAgent
     /**
      * Enable or disable streaming mode
      *
-     * @param bool $streaming Whether to enable streaming
-     * @param callable|null $callback Optional callback function to process each chunk
+     * @param  bool  $streaming  Whether to enable streaming
+     * @param  callable|null  $callback  Optional callback function to process each chunk
      * @return $this
      */
     public function streaming(bool $streaming = true, ?callable $callback = null): self
@@ -259,8 +259,6 @@ class LarAgent
 
     /**
      * Check if streaming is enabled
-     *
-     * @return bool
      */
     public function isStreaming(): bool
     {
@@ -269,8 +267,6 @@ class LarAgent
 
     /**
      * Get the streaming callback function
-     *
-     * @return callable|null
      */
     public function getStreamCallback(): ?callable
     {
@@ -345,7 +341,7 @@ class LarAgent
 
         // Use regular mode
         $response = $this->send($this->message);
-        
+
         // Process the response with common post-processing logic
         return $this->processResponse($response);
     }
@@ -353,28 +349,30 @@ class LarAgent
     /**
      * Run the agent with streaming enabled.
      *
-     * @param callable|null $callback Optional callback function to process each chunk
+     * @param  callable|null  $callback  Optional callback function to process each chunk
      * @return \Generator A generator that yields chunks of the response
      */
     public function runStreamed(?callable $callback = null): \Generator
     {
         // Enable streaming mode if not already enabled
-        if (!$this->isStreaming()) {
+        if (! $this->isStreaming()) {
             $this->streaming(true, $callback);
         }
-        
+
         // Prepare the agent for execution
         if ($this->prepareExecution() === false) {
             // Return an empty generator when execution is stopped
-            return (function () { yield from []; })();
+            return (function () {
+                yield from [];
+            })();
         }
-        
+
         // Use streaming mode
         $streamGenerator = $this->stream($this->message, $this->getStreamCallback());
-        
+
         // Reset message to null to skip adding it again in chat history
         $this->message = null;
-        
+
         // Return the stream generator
         return $streamGenerator;
     }
@@ -382,8 +380,8 @@ class LarAgent
     /**
      * Stream a message to the LLM and receive a streamed response.
      *
-     * @param MessageInterface|null $message The message to send
-     * @param callable|null $callback Optional callback function to process each chunk
+     * @param  MessageInterface|null  $message  The message to send
+     * @param  callable|null  $callback  Optional callback function to process each chunk
      * @return \Generator A generator that yields chunks of the response
      */
     protected function stream(?MessageInterface $message = null, ?callable $callback = null): \Generator
@@ -420,10 +418,10 @@ class LarAgent
         if ($finalMessage) {
             $this->processAfterResponse($finalMessage);
             $this->chatHistory->addMessage($finalMessage);
-            
+
             // Process the final message with common post-processing logic
             $processedResponse = $this->processResponse($finalMessage);
-            
+
             // If the response is a generator (from a tool call that triggered another stream),
             // yield its chunks
             if ($processedResponse instanceof \Generator) {
@@ -435,7 +433,7 @@ class LarAgent
             }
         }
     }
-    
+
     /**
      * Prepare the agent for execution by handling instructions, tools, and response schema.
      *
@@ -476,7 +474,7 @@ class LarAgent
         if ($this->processBeforeSend($this->chatHistory, $this->getCurrentMessage()) === false) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -502,11 +500,11 @@ class LarAgent
         // Process the response with common post-processing logic
         return $response;
     }
-    
+
     /**
      * Process a response message with common post-processing logic.
      *
-     * @param MessageInterface $response The response message to process
+     * @param  MessageInterface  $response  The response message to process
      * @return MessageInterface|array|null|\Generator The processed response
      */
     protected function processResponse(MessageInterface $response): MessageInterface|array|null|\Generator
@@ -515,16 +513,17 @@ class LarAgent
         if ($this->processAfterSend($this->chatHistory, $response) === false) {
             return null;
         }
-        
+
         // Process tools if the response is a tool call
         if ($response instanceof ToolCallMessage) {
-            
+
             $this->processTools($response);
-            
+
             // Continue the conversation with tool results
             if ($this->isStreaming()) {
                 return $this->runStreamed();
             }
+
             return $this->run();
         }
         
@@ -532,17 +531,17 @@ class LarAgent
         $this->processBeforeSaveHistory($this->chatHistory);
         // Save chat history to memory
         $this->chatHistory->writeToMemory();
-        
+
         if ($this->driver->structuredOutputEnabled()) {
             $array = json_decode($response->getContent(), true);
             // Hook: Before structured output response
             if ($this->processBeforeStructuredOutput($array) === false) {
                 return null;
             }
-            
+
             return $array;
         }
-        
+
         return $response;
     }
 
@@ -616,7 +615,7 @@ class LarAgent
     /**
      * Create a user message from a string
      *
-     * @param string $content The message content
+     * @param  string  $content  The message content
      * @return MessageInterface The created user message
      */
     protected function createUserMessage(string $content): MessageInterface

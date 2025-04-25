@@ -22,9 +22,10 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
     /**
      * Send a message to the LLM and receive a response.
      *
-     * @param array $messages Array of messages to send
-     * @param array $options Configuration options
+     * @param  array  $messages  Array of messages to send
+     * @param  array  $options  Configuration options
      * @return AssistantMessage The response from the LLM
+     *
      * @throws \Exception
      */
     public function sendMessage(array $messages, array $options = []): AssistantMessage
@@ -67,15 +68,14 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
         throw new \Exception('Unexpected finish reason: '.$finishReason);
     }
 
-    
-
     /**
      * Send a message to the LLM and receive a streamed response.
      *
-     * @param array $messages Array of messages to send
-     * @param array $options Configuration options
-     * @param callable|null $callback Optional callback function to process each chunk
+     * @param  array  $messages  Array of messages to send
+     * @param  array  $options  Configuration options
+     * @param  callable|null  $callback  Optional callback function to process each chunk
      * @return \Generator A generator that yields chunks of the response
+     *
      * @throws \Exception
      */
     public function sendMessageStreamed(array $messages, array $options = [], ?callable $callback = null): \Generator
@@ -86,7 +86,7 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
 
         // Prepare the payload with common settings
         $payload = $this->preparePayload($messages, $options);
-        
+
         // Add stream-specific options
         $payload['stream'] = true;
         $payload['stream_options'] = [
@@ -97,7 +97,7 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
         $stream = $this->client->chat()->createStreamed($payload);
 
         // Initialize variables to track the streamed response
-        $streamedMessage = new StreamedAssistantMessage();
+        $streamedMessage = new StreamedAssistantMessage;
         $content = '';
         $toolCalls = [];
         $toolCallsSummary = []; // Store complete tool calls by ID
@@ -107,7 +107,7 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
         // Process the stream
         foreach ($stream as $response) {
             $this->lastResponse = $response;
-            
+
             // Check if this is the last chunk with usage information
             if (isset($response->usage)) {
                 $streamedMessage->setUsage([
@@ -116,68 +116,68 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
                     'total_tokens' => $response->usage->totalTokens,
                 ]);
                 $streamedMessage->setComplete(true);
-                
+
                 // Execute callback if provided
                 if ($callback) {
                     $callback($streamedMessage);
                 }
-                
+
                 yield $streamedMessage;
+
                 continue;
             }
-            
+
             // Process the delta content
             $delta = $response->choices[0]->delta ?? null;
             $finishReason = $response->choices[0]->finishReason ?? $finishReason;
-            
+
             // Handle tool calls
             if ($this->hasToolCalls($delta)) {
-                
+
                 $this->processToolCallDelta($delta, $toolCalls, $toolCallsSummary, $lastIndex);
-            } 
+            }
             // Handle regular content
             elseif (isset($delta->content)) {
                 $streamedMessage->appendContent($delta->content);
-                
+
                 // Execute callback if provided
                 if ($callback) {
                     $callback($streamedMessage);
                 }
-                
+
                 // Yield the message
                 yield $streamedMessage;
             }
         }
-        
-        
+
         // If we have tool calls, convert them to a ToolCallMessage
-        if (!empty($toolCallsSummary) && $finishReason === 'tool_calls') {
-            
+        if (! empty($toolCallsSummary) && $finishReason === 'tool_calls') {
+
             // Convert to ToolCall objects
             $toolCallObjects = array_map(function ($tc) {
                 // Ensure we have valid values for all parameters
-                $id = $tc['id'] ?? 'tool_call_' . uniqid();
+                $id = $tc['id'] ?? 'tool_call_'.uniqid();
                 $name = $tc['function']['name'] ?? '';
                 $arguments = $tc['function']['arguments'] ?? '{}';
-                
+
                 return new ToolCall($id, $name, $arguments);
             }, array_values($toolCallsSummary));
-            
+
             // Build tool calls message
             $message = $this->toolCallsToMessage($toolCallObjects);
-            
+
             // Create and return a ToolCallMessage
             $toolCallMessage = new ToolCallMessage(
-                $toolCallObjects, 
-                $message, 
+                $toolCallObjects,
+                $message,
                 $streamedMessage->getUsage() ? ['usage' => $streamedMessage->getUsage()] : []
             );
-            
+
             // Execute callback if provided
             if ($callback) {
                 $callback($toolCallMessage);
             }
-            
+
             // Final yield with the complete ToolCallMessage
             yield $toolCallMessage;
         }
@@ -185,32 +185,30 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
 
     /**
      * Check if the delta contains tool calls
-     * 
-     * @param mixed $delta The delta object from the stream
+     *
+     * @param  mixed  $delta  The delta object from the stream
      * @return bool True if the delta contains tool calls
      */
     protected function hasToolCalls(mixed $delta): bool
     {
-        return isset($delta->toolCalls) && !empty($delta->toolCalls);
+        return isset($delta->toolCalls) && ! empty($delta->toolCalls);
     }
-    
 
     /**
      * Process a tool call delta from the stream
-     * 
-     * @param mixed $delta The delta object from the stream
-     * @param array &$toolCalls Reference to the array of tool calls being built
-     * @param array &$toolCallsSummary Reference to the array of complete tool calls
-     * @param int &$lastIndex Reference to the last index seen
-     * @return void
+     *
+     * @param  mixed  $delta  The delta object from the stream
+     * @param  array  &$toolCalls  Reference to the array of tool calls being built
+     * @param  array  &$toolCallsSummary  Reference to the array of complete tool calls
+     * @param  int  &$lastIndex  Reference to the last index seen
      */
     protected function processToolCallDelta(mixed $delta, array &$toolCalls, array &$toolCallsSummary, int &$lastIndex): void
     {
         foreach ($delta->toolCalls as $toolCallDelta) {
             $index = $toolCallDelta->index ?? 0;
-            
+
             // Initialize tool call if it's new
-            if (!isset($toolCalls[$index])) {
+            if (! isset($toolCalls[$index])) {
                 $toolCalls[$index] = [
                     'id' => $toolCallDelta->id ?? null,
                     'type' => $toolCallDelta->type ?? 'function',
@@ -220,31 +218,31 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
                     ],
                 ];
             }
-            
+
             // Update tool call with delta information
             if (isset($toolCallDelta->function->name) && $toolCallDelta->function->name) {
                 $toolCalls[$index]['function']['name'] = $toolCallDelta->function->name;
             }
-            
+
             if (isset($toolCallDelta->function->arguments)) {
                 $toolCalls[$index]['function']['arguments'] .= $toolCallDelta->function->arguments;
             }
-            
+
             if (isset($toolCallDelta->id) && $toolCallDelta->id) {
                 $toolCalls[$index]['id'] = $toolCallDelta->id;
             }
-            
+
             // If we have a complete tool call with name and arguments, store it in summary
-            if (!empty($toolCalls[$index]['function']['name']) && 
+            if (! empty($toolCalls[$index]['function']['name']) &&
                 strpos($toolCalls[$index]['function']['arguments'], '}') !== false &&
                 json_decode($toolCalls[$index]['function']['arguments']) !== null) {
-                
+
                 // Store in summary by ID to avoid duplicates
-                if (!empty($toolCalls[$index]['id'])) {
+                if (! empty($toolCalls[$index]['id'])) {
                     $toolCallsSummary[$toolCalls[$index]['id']] = $toolCalls[$index];
                 } else {
                     // For tool calls without ID, use index as key
-                    $toolCallsSummary['index_' . $index] = $toolCalls[$index];
+                    $toolCallsSummary['index_'.$index] = $toolCalls[$index];
                 }
 
                 $toolCalls[$index]['function']['arguments'] = '';
@@ -306,8 +304,8 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
     /**
      * Prepare the payload for API request with common settings
      *
-     * @param array $messages The messages to send
-     * @param array $options Configuration options
+     * @param  array  $messages  The messages to send
+     * @param  array  $options  Configuration options
      * @return array The prepared payload
      */
     protected function preparePayload(array $messages, array $options = []): array

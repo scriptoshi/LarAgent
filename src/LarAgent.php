@@ -413,22 +413,6 @@ class LarAgent
         // Process each chunk of the stream
         foreach ($stream as $chunk) {
             $finalMessage = $chunk;
-            
-            // // If this is a tool call message, process it here instead of in processResponse
-            // if ($chunk instanceof ToolCallMessage && !$toolCallProcessed) {
-            //     // Mark as processed to prevent infinite recursion
-            //     $toolCallProcessed = true;
-                
-            //     // Add the tool call message to chat history
-            //     $this->chatHistory->addMessage($chunk);
-                
-            //     // Process the tool calls
-            //     $this->processTools($chunk);
-                
-            //     // Continue yielding the chunk
-            // }
-            
-            // Yield the chunk to the caller
             yield $chunk;
         }
 
@@ -446,6 +430,8 @@ class LarAgent
                 foreach ($processedResponse as $chunk) {
                     yield $chunk;
                 }
+            } else {
+                yield $processedResponse;
             }
         }
     }
@@ -466,7 +452,7 @@ class LarAgent
             // Reinject instructions if ReinjectInstuctionsPer is defined
             $iip = $this->getReinjectInstuctionsPer();
             if ($iip && $iip > 0 && $totalMessages % $iip > 0 && $totalMessages % $iip <= 5) {
-                // If any callback returns false, it will stop the process silently
+                // Hook: If any callback returns false, it will stop the process silently
                 if ($this->processBeforeReinjectingInstructions($this->chatHistory) === false) {
                     return false;
                 }
@@ -486,7 +472,7 @@ class LarAgent
             $this->driver->setResponseSchema($this->responseSchema);
         }
 
-        // Before send (Before adding message in chat history)
+        // Hook: Before send (Before adding message in chat history)
         if ($this->processBeforeSend($this->chatHistory, $this->getCurrentMessage()) === false) {
             return false;
         }
@@ -501,7 +487,7 @@ class LarAgent
         if ($message) {
             $this->chatHistory->addMessage($message);
         }
-        // Before response (Before sending message to LLM)
+        // Hook: Before response (Before sending message to LLM)
         // If any callback will return false, it will stop the process silently
         // If you want to rise an exception, you can do it in the callback
         if ($this->processBeforeResponse($this->chatHistory, $message) === false) {
@@ -536,21 +522,20 @@ class LarAgent
             $this->processTools($response);
             
             // Continue the conversation with tool results
-            // @todo fix infinitie loop while streaming + tools
             if ($this->isStreaming()) {
                 return $this->runStreamed();
             }
             return $this->run();
         }
         
-        // Before saving chat history
+        // Hook: Before saving chat history
         $this->processBeforeSaveHistory($this->chatHistory);
         // Save chat history to memory
         $this->chatHistory->writeToMemory();
         
         if ($this->driver->structuredOutputEnabled()) {
             $array = json_decode($response->getContent(), true);
-            // Before structured output response
+            // Hook: Before structured output response
             if ($this->processBeforeStructuredOutput($array) === false) {
                 return null;
             }
@@ -610,14 +595,14 @@ class LarAgent
     {
         $tool = $this->driver->getTool($toolCall->getToolName());
         $args = json_decode($toolCall->getArguments(), true);
-        // Before tool execution, skip tool if false returned
+        // Hook: Before tool execution, skip tool if false returned
         if ($this->processBeforeToolExecution($tool) === false) {
             return null;
         }
 
         $result = $tool->execute($args);
 
-        // After tool execution, skip adding result to chat history if false returned
+        // Hook: After tool execution, skip adding result to chat history if false returned
         if ($this->processAfterToolExecution($tool, $result) === false) {
             return null;
         }

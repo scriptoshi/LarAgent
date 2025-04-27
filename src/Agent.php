@@ -278,7 +278,7 @@ class Agent
                             'complete' => true,
                         ]) . "\n";
                     } elseif ($format === 'sse') {
-                        echo "event: chunk\n";
+                        echo "event: structured\n";
                         echo "data: " . json_encode([
                             'type' => 'structured',
                             'delta' => '',

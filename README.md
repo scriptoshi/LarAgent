@@ -182,6 +182,7 @@ Stay tuned! We're constantly working on making LarAgent the most versatile AI ag
   - [Tools (Function Calling)](#tools)
   - [Chat History](#chat-history)
   - [Structured Output](#structured-output)
+  - [Streaming](#streaming)
   - [LLM Drivers](#llm-drivers)
   - [Usage without Laravel](#usage-in-and-outside-of-laravel)
 - [🔥 Events](#events)
@@ -894,6 +895,274 @@ if ($agent->structuredOutput()) {
     // Handle structured response
 }
 ```
+
+
+### Streaming
+
+LarAgent provides robust streaming support, allowing you to receive AI responses in real-time chunks rather than waiting for the complete response. This is particularly useful for long responses, improving user experience by showing progress as the AI generates content.
+
+#### Basic Streaming
+
+The simplest way to use streaming is with the `respondStreamed` method:
+
+```php
+$agent = WeatherAgent::for('user-123');
+$stream = $agent->respondStreamed('What\'s the weather like in Boston and Los Angeles?');
+
+foreach ($stream as $chunk) {
+    if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
+        echo $chunk->getLastChunk(); // Output each new piece of content
+    }
+}
+```
+
+#### Streaming with Callback
+
+You can also provide a callback function to process each chunk:
+
+```php
+$agent = WeatherAgent::for('user-123');
+$stream = $agent->respondStreamed(
+    'What\'s the weather like in Boston and Los Angeles?',
+    function ($chunk) {
+        if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
+            echo $chunk->getLastChunk();
+            // Flush output buffer to send content to the browser immediately
+            ob_flush();
+            flush();
+        }
+    }
+);
+
+// Consume the stream to ensure it completes
+foreach ($stream as $_) {
+    // The callback handles the output
+}
+```
+
+#### Understanding Stream Chunks
+
+The stream can yield three types of chunks:
+
+1. **StreamedAssistantMessage**: Regular text content chunks
+2. **ToolCallMessage**: Tool call messages (handled internally by LarAgent)
+3. **Array**: Final chunk when structured output is enabled
+
+For most use cases, you only need to handle `StreamedAssistantMessage` chunks as shown in the examples above. Tool calls are processed automatically by LarAgent.
+
+#### Laravel HTTP Streaming
+
+For Laravel applications, LarAgent provides the `streamResponse` method that returns a Laravel `StreamedResponse`, making it easy to integrate with your controllers:
+
+```php
+// In a controller
+public function chat(Request $request)
+{
+    $message = $request->input('message');
+    $agent = WeatherAgent::for(auth()->id());
+    
+    // Return a streamable response
+    return $agent->streamResponse($message, 'plain');
+}
+```
+
+The `streamResponse` method supports three formats:
+
+1. **'plain'** (default): Simple text output
+2. **'json'**: Structured JSON with delta and content
+3. **'sse'**: Server-Sent Events format with event types
+
+##### Plain Text Streaming
+
+```php
+return $agent->streamResponse($message, 'plain');
+```
+
+Frontend implementation (JavaScript):
+```javascript
+fetch('/chat?message=What is the weather in Boston?')
+  .then(response => {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    function read() {
+      return reader.read().then(({ done, value }) => {
+        if (done) return;
+        
+        const text = decoder.decode(value);
+        document.getElementById('output').textContent += text;
+        
+        return read();
+      });
+    }
+    
+    return read();
+  });
+```
+
+##### JSON Streaming
+
+```php
+return $agent->streamResponse($message, 'json');
+```
+
+Frontend implementation (JavaScript):
+```javascript
+fetch('/chat?message=What is the weather in Boston?')
+  .then(response => {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    
+    function read() {
+      return reader.read().then(({ done, value }) => {
+        if (done) return;
+        
+        buffer += decoder.decode(value);
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Keep the last incomplete line in the buffer
+        
+        lines.forEach(line => {
+          if (line.trim()) {
+            const data = JSON.parse(line);
+            if (data.type === 'structured') {
+              // Handle structured output
+              handleStructuredOutput(data.content);
+            } else {
+              // Handle regular content
+              document.getElementById('output').textContent += data.delta;
+            }
+          }
+        });
+        
+        return read();
+      });
+    }
+    
+    return read();
+  });
+```
+
+Example JSON response for regular content chunks:
+```json
+{
+  "delta": "currently", // New content since last chunk
+  "content": "The weather in Boston is currently", // Accumulated content so far
+  "complete": false // Whether this is the final chunk
+}
+```
+
+Example JSON response for structured output:
+```json
+{
+  "type": "structured",
+  "delta": "",
+  "content": {
+    "name": "John Doe",
+    "age": 30,
+    "interests": ["coding", "reading", "hiking"]
+  },
+  "complete": true
+}
+```
+
+#### SSE (Server-Sent Events) Streaming
+
+```php
+return $agent->streamResponse($message, 'sse');
+```
+
+Frontend implementation (JavaScript):
+```javascript
+const eventSource = new EventSource('/chat?message=What is the weather in Boston?');
+
+eventSource.addEventListener('chunk', function(event) {
+  const data = JSON.parse(event.data);
+  document.getElementById('output').textContent += data.delta;
+});
+
+eventSource.addEventListener('structured', function(event) {
+  const data = JSON.parse(event.data);
+  handleStructuredOutput(data.content);
+});
+
+eventSource.addEventListener('complete', function(event) {
+  eventSource.close();
+});
+
+function handleStructuredOutput(content) {
+  // Process structured output (e.g., JSON schema response)
+  console.log('Structured output:', content);
+}
+```
+
+Example SSE events for regular content:
+```
+event: chunk
+data: {"delta":"currently","content":"The weather in Boston is currently","complete":false}
+
+event: complete
+data: {"content":"The weather in Boston is currently 65°F and partly cloudy."}
+```
+
+Example SSE event for structured output:
+```
+event: structured
+data: {"type":"structured","delta":"","content":{"name":"John Doe","age":30,"interests":["coding","reading","hiking"]},"complete":true}
+
+event: complete
+data: {"content":{"name":"John Doe","age":30,"interests":["coding","reading","hiking"]}}
+```
+
+_Note: Structured event returned only as the last chunk of structured response, before complation, it is normal chunk with partial json_
+
+#### Streaming with Structured Output
+
+When using structured output (JSON schema), the final chunk in the stream will be an array containing the structured data:
+
+```php
+$agent = ProfileAgent::for('user-123');
+$stream = $agent->respondStreamed('Create a profile for John');
+
+$structuredOutput = null;
+
+foreach ($stream as $chunk) {
+    if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
+        echo $chunk->getLastChunk();
+    } elseif (is_array($chunk)) {
+        // This is the structured output
+        $structuredOutput = $chunk;
+    }
+}
+
+// Now $structuredOutput contains the structured data
+var_dump($structuredOutput);
+```
+
+#### Handling Tool Calls During Streaming
+
+Tool calls are automatically processed by LarAgent during streaming. You don't need to handle them manually, but you might see output from tool executions interspersed with the streaming content:
+
+```php
+$agent = WeatherAgent::for('user-123');
+$stream = $agent->respondStreamed('What\'s the weather like in Boston and Los Angeles?');
+
+foreach ($stream as $chunk) {
+    if ($chunk instanceof \LarAgent\Messages\ToolCallMessage) {
+        print_r($chunk->getToolCalls());
+    }
+}
+```
+
+#### Performance Considerations
+
+Streaming responses can significantly improve perceived performance, especially for longer responses. However, keep these considerations in mind:
+
+1. Streaming increases the number of HTTP connections
+2. For very short responses, the overhead of streaming might not be worth it
+3. When using SSE, ensure your server is configured to handle long-lived connections
+4. For high-traffic applications, consider implementing a queue system for streaming responses
+
 
 ### LLM Drivers
 

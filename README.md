@@ -1055,7 +1055,7 @@ protected function onConversationStart()
 
 #### onConversationEnd
 
-Called at the end of each `respond` method, this hook allows you to perform cleanup, logging or any other logic your application might need after a conversation ends.
+Called at the end of each `respond` method, this hook allows you to perform cleanup, logging or any other logic your application might need after a conversation ends. In case of streaming, it runs at the last chunk received.
 
 ```php
 /** @param MessageInterface|array|null $message */

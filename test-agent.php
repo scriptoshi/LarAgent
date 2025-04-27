@@ -118,6 +118,7 @@ class WeatherAgent extends LarAgent\Agent
     public function weatherTool($location, $unit = 'celsius')
     {
         echo "// Wheather tool called for $location // \n\n";
+
         return 'The weather in '.$location.' is '.'20'.' degrees '.$unit;
     }
 

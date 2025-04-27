@@ -189,8 +189,8 @@ class Agent
     /**
      * Process a message and get the agent's response as a stream
      *
-     * @param string|null $message Optional message to process
-     * @param callable|null $callback Optional callback to process each chunk
+     * @param  string|null  $message  Optional message to process
+     * @param  callable|null  $callback  Optional callback to process each chunk
      * @return \Generator A stream of response chunks
      */
     public function respondStreamed(?string $message = null, ?callable $callback = null): \Generator
@@ -230,13 +230,13 @@ class Agent
      * Process a message and get the agent's response as a streamable response
      * for Laravel applications
      *
-     * @param string|null $message Optional message to process
-     * @param string $format Response format: 'plain', 'json', or 'sse'
+     * @param  string|null  $message  Optional message to process
+     * @param  string  $format  Response format: 'plain', 'json', or 'sse'
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function streamResponse(?string $message = null, string $format = 'plain')
     {
-        $contentType = match($format) {
+        $contentType = match ($format) {
             'json' => 'application/json',
             'sse' => 'text/event-stream',
             default => 'text/plain',
@@ -246,7 +246,7 @@ class Agent
             $stream = $this->respondStreamed($message, function ($chunk) use (&$accumulated, $format) {
                 if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
                     $delta = $chunk->getLastChunk();
-                    
+
                     if ($format === 'plain') {
                         echo $delta;
                     } elseif ($format === 'json') {
@@ -254,16 +254,16 @@ class Agent
                             'delta' => $delta,
                             'content' => $chunk->getContent(),
                             'complete' => $chunk->isComplete(),
-                        ]) . "\n";
+                        ])."\n";
                     } elseif ($format === 'sse') {
                         echo "event: chunk\n";
-                        echo "data: " . json_encode([
+                        echo 'data: '.json_encode([
                             'delta' => $delta,
                             'content' => $chunk->getContent(),
                             'complete' => $chunk->isComplete(),
-                        ]) . "\n\n";
+                        ])."\n\n";
                     }
-                    
+
                     ob_flush();
                     flush();
                 } elseif (is_array($chunk)) {
@@ -276,31 +276,31 @@ class Agent
                             'delta' => '',
                             'content' => $chunk,
                             'complete' => true,
-                        ]) . "\n";
+                        ])."\n";
                     } elseif ($format === 'sse') {
                         echo "event: chunk\n";
-                        echo "data: " . json_encode([
+                        echo 'data: '.json_encode([
                             'type' => 'structured',
                             'delta' => '',
                             'content' => $chunk,
                             'complete' => true,
-                        ]) . "\n\n";
+                        ])."\n\n";
                     }
-                    
+
                     ob_flush();
                     flush();
                 }
             });
-            
+
             // Consume the stream
             foreach ($stream as $_) {
                 // The callback handles the output
             }
-            
+
             // Signal completion
             if ($format === 'sse') {
                 echo "event: complete\n";
-                echo "data: " . json_encode(['content' => $accumulated]) . "\n\n";
+                echo 'data: '.json_encode(['content' => $accumulated])."\n\n";
                 ob_flush();
                 flush();
             }
@@ -310,8 +310,6 @@ class Agent
             'X-Accel-Buffering' => 'no',
         ]);
     }
-
-    
 
     // Overridables
 

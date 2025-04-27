@@ -2,9 +2,7 @@
 
 use LarAgent\Agent;
 use LarAgent\Message;
-use LarAgent\Messages\StreamedAssistantMessage;
 use LarAgent\Tests\Fakes\FakeLlmDriver;
-use LarAgent\Tool;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StreamingTestAgent extends Agent
@@ -79,11 +77,15 @@ class StructuredOutputTestAgent extends StreamingTestAgent
 }
 
 // Mock the Laravel response function if it doesn't exist
-if (!function_exists('response')) {
-    function response() {
-        return new class {
-            public function stream(callable $callback, int $status = 200, array $headers = []) {
+if (! function_exists('response')) {
+    function response()
+    {
+        return new class
+        {
+            public function stream(callable $callback, int $status = 200, array $headers = [])
+            {
                 $response = new StreamedResponse($callback, $status, $headers);
+
                 return $response;
             }
         };
@@ -93,22 +95,22 @@ if (!function_exists('response')) {
 // Test the respondStreamed method
 it('can stream responses using respondStreamed method', function () {
     $agent = new StreamingTestAgent('test_key');
-    
+
     // Get the stream
     $stream = $agent->respondStreamed('Test message');
-    
+
     // Verify the stream is a Generator
     expect($stream)->toBeInstanceOf(\Generator::class);
-    
+
     // Collect all messages from the stream
     $messages = [];
     foreach ($stream as $message) {
         $messages[] = $message;
     }
-    
+
     // Verify we received messages
     expect($messages)->not->toBeEmpty();
-    
+
     // Check the content of the last message
     $lastMessage = end($messages);
     expect($lastMessage->getContent() ?? $lastMessage)->toContain('This is a streaming response');
@@ -117,23 +119,23 @@ it('can stream responses using respondStreamed method', function () {
 // Test the streaming with a callback
 it('can stream responses with a callback', function () {
     $agent = new StreamingTestAgent('test_key');
-    
+
     // Collect chunks in this array
     $receivedChunks = [];
-    
+
     // Get the stream with a callback
     $stream = $agent->respondStreamed('Test message', function ($chunk) use (&$receivedChunks) {
         $receivedChunks[] = $chunk;
     });
-    
+
     // Consume the stream
     foreach ($stream as $_) {
         // The callback handles the chunks
     }
-    
+
     // Verify we received chunks via the callback
     expect($receivedChunks)->not->toBeEmpty();
-    
+
     // Check the content of the last chunk
     $lastChunk = end($receivedChunks);
     expect($lastChunk->getContent() ?? $lastChunk)->toContain('This is a streaming response');
@@ -142,22 +144,22 @@ it('can stream responses with a callback', function () {
 // Test structured output streaming
 it('can stream structured output responses', function () {
     $agent = new StructuredOutputTestAgent('test_key');
-    
+
     // Get the stream
     $stream = $agent->respondStreamed('Test message');
-    
+
     // Collect all messages from the stream
     $messages = [];
     foreach ($stream as $message) {
         $messages[] = $message;
     }
-    
+
     // Verify we received messages
     expect($messages)->not->toBeEmpty();
-    
+
     // The last message should be the structured output
     $lastMessage = end($messages);
-    
+
     // If it's an array, it's the structured output
     if (is_array($lastMessage)) {
         expect($lastMessage)->toHaveKeys(['name', 'age', 'interests'])
@@ -170,13 +172,13 @@ it('can stream structured output responses', function () {
 // Test the streamResponse method with plain format
 it('can generate a stream response with plain format', function () {
     $agent = new StreamingTestAgent('test_key');
-    
+
     // Get the response
     $response = $agent->streamResponse('Test message', false, 'plain');
-    
+
     // Verify it's a StreamedResponse
     expect($response)->toBeInstanceOf(StreamedResponse::class);
-    
+
     // Check headers directly from the response object
     expect($response->headers->get('Content-Type'))->toBe('text/plain');
 });
@@ -184,27 +186,28 @@ it('can generate a stream response with plain format', function () {
 // Test the streamResponse method with JSON format
 it('can generate a stream response with JSON format', function () {
     $agent = new StreamingTestAgent('test_key');
-    
+
     // Create a test to verify the content type is set correctly
     // We'll use runkit_function_redefine if available, otherwise skip
-    if (!function_exists('runkit_function_redefine') && !function_exists('uopz_set_return')) {
+    if (! function_exists('runkit_function_redefine') && ! function_exists('uopz_set_return')) {
         // Instead of skipping, we'll just verify the match() logic works
-        $contentType = match('json') {
+        $contentType = match ('json') {
             'json' => 'application/json',
             'sse' => 'text/event-stream',
             default => 'text/plain',
         };
-        
+
         expect($contentType)->toBe('application/json');
+
         return;
     }
-    
+
     // Get the response
     $response = $agent->streamResponse('Test message', true, 'json');
-    
+
     // Verify it's a StreamedResponse
     expect($response)->toBeInstanceOf(StreamedResponse::class);
-    
+
     // Verify the content type header
     expect($response->headers->get('Content-Type'))->toBe('application/json');
 });
@@ -212,27 +215,28 @@ it('can generate a stream response with JSON format', function () {
 // Test the streamResponse method with SSE format
 it('can generate a stream response with SSE format', function () {
     $agent = new StreamingTestAgent('test_key');
-    
+
     // Create a test to verify the content type is set correctly
     // We'll use runkit_function_redefine if available, otherwise skip
-    if (!function_exists('runkit_function_redefine') && !function_exists('uopz_set_return')) {
+    if (! function_exists('runkit_function_redefine') && ! function_exists('uopz_set_return')) {
         // Instead of skipping, we'll just verify the match() logic works
-        $contentType = match('sse') {
+        $contentType = match ('sse') {
             'json' => 'application/json',
             'sse' => 'text/event-stream',
             default => 'text/plain',
         };
-        
+
         expect($contentType)->toBe('text/event-stream');
+
         return;
     }
-    
+
     // Get the response
     $response = $agent->streamResponse('Test message', false, 'sse');
-    
+
     // Verify it's a StreamedResponse
     expect($response)->toBeInstanceOf(StreamedResponse::class);
-    
+
     // Verify the content type header
     expect($response->headers->get('Content-Type'))->toBe('text/event-stream');
 });

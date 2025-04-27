@@ -279,7 +279,7 @@ class Agent
                         ])."\n";
                     } elseif ($format === 'sse') {
                         echo "event: structured\n";
-                        echo "data: " . json_encode([
+                        echo 'data: '.json_encode([
                             'type' => 'structured',
                             'delta' => '',
                             'content' => $chunk,

@@ -30,6 +30,11 @@ interface Tool
     public function getProperties(): array;
 
     /**
+     * Get the required properties.
+     */
+    public function getRequired(): array;
+
+    /**
      * Generate the complete tool definition as an array.
      */
     public function toArray(): array;

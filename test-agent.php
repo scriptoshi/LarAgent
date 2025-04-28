@@ -61,7 +61,8 @@ class WeatherAgent extends LarAgent\Agent
 {
     protected $provider = 'default';
 
-    protected $model = 'o1-2024-12-17';
+    // protected $model = 'o1-2024-12-17';
+    protected $model = 'gpt-4o-mini';
 
     // Tool by classes
     protected $tools = [
@@ -116,6 +117,8 @@ class WeatherAgent extends LarAgent\Agent
     #[Tool('Get the current weather in a given location')]
     public function weatherTool($location, $unit = 'celsius')
     {
+        echo "// Wheather tool called for $location // \n\n";
+
         return 'The weather in '.$location.' is '.'20'.' degrees '.$unit;
     }
 
@@ -130,11 +133,20 @@ class WeatherAgent extends LarAgent\Agent
     }
 }
 
-echo WeatherAgent::for('test_chat')->respond('What\'s the weather like in Boston and Los Angeles? I prefer fahrenheit');
-echo "\n---\n";
 // // Using "celsus" instead of "celsius" to check correct pick of enum value
 // echo WeatherAgent::for('test_chat')->respond('Thanks for the info. What about New York? I prefer celsus');
 // echo "\n---\n";
 // echo WeatherAgent::for('test_chat')->message('Where am I now?')->respond();
 // echo "\n---\n";
 // echo WeatherAgent::for('test_chat')->model();
+
+$stream = WeatherAgent::for('test_chat')
+    ->respondStreamed(
+        'What\'s the weather like in Boston and Los Angeles? I prefer fahrenheit.'
+    );
+
+foreach ($stream as $chunk) {
+    if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
+        echo $chunk->getLastChunk();
+    }
+}

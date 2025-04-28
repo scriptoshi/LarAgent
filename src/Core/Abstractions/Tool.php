@@ -65,6 +65,11 @@ abstract class Tool implements ToolInterface
         return $this->properties;
     }
 
+    public function getRequired(): array
+    {
+        return $this->required;
+    }
+
     public function setMetaData(array $metaData): self
     {
         $this->metaData = $metaData;
@@ -80,18 +85,11 @@ abstract class Tool implements ToolInterface
     // @todo abstraction
     public function toArray(): array
     {
-        return [
-            'type' => 'function',
-            'function' => [
-                'name' => $this->getName(),
-                'description' => $this->getDescription(),
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => $this->getProperties(),
-                    'required' => $this->required,
-                ],
-            ],
-        ];
+        // Get the LlmDriver instance from the container
+        $driver = app()->make(\LarAgent\Core\Contracts\LlmDriver::class);
+
+        // Use the driver's format for the tool
+        return $driver->formatToolForPayload($this);
     }
 
     protected function resolveEnum(array $enum, string $name): array

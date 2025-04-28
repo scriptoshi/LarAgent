@@ -10,6 +10,7 @@ use LarAgent\Core\Contracts\Message as MessageInterface;
 use LarAgent\Core\Contracts\Tool as ToolInterface;
 use LarAgent\Core\DTO\AgentDTO;
 use LarAgent\Core\Traits\Events;
+use LarAgent\Messages\StreamedAssistantMessage;
 
 /**
  * Class Agent
@@ -175,27 +176,139 @@ class Agent
 
         $this->onConversationStart();
 
-        $message = Message::user($this->prompt($this->message));
+        $message = $this->prepareMessage();
 
-        if (! empty($this->images)) {
-            foreach ($this->images as $imageUrl) {
-                $message = $message->withImage($imageUrl);
-            }
-        }
-
-        $this->agent
-            ->withInstructions($this->instructions(), $this->developerRoleForInstructions)
-            ->withMessage($message)
-            ->setTools($this->getTools());
-
-        if ($this->structuredOutput()) {
-            $this->agent->structured($this->structuredOutput());
-        }
+        $this->prepareAgent($message);
 
         $response = $this->agent->run();
         $this->onConversationEnd($response);
 
         return $response;
+    }
+
+    /**
+     * Process a message and get the agent's response as a stream
+     *
+     * @param  string|null  $message  Optional message to process
+     * @param  callable|null  $callback  Optional callback to process each chunk
+     * @return \Generator A stream of response chunks
+     */
+    public function respondStreamed(?string $message = null, ?callable $callback = null): \Generator
+    {
+        if ($message) {
+            $this->message($message);
+        }
+
+        $this->setupBeforeRespond();
+
+        $this->onConversationStart();
+
+        $message = $this->prepareMessage();
+
+        $this->prepareAgent($message);
+
+        // Run the agent with streaming enabled
+        $stream = $this->agent->runStreamed(function ($streamedMessage) use ($callback) {
+            if ($streamedMessage instanceof StreamedAssistantMessage) {
+                // Call onConversationEnd when the stream message is complete
+                if ($streamedMessage->isComplete()) {
+                    $this->onConversationEnd($streamedMessage);
+                }
+            }
+
+            // Run callback if defined
+            if ($callback) {
+                $callback($streamedMessage);
+            }
+        });
+
+        // Return the stream generator
+        return $stream;
+    }
+
+    /**
+     * Process a message and get the agent's response as a streamable response
+     * for Laravel applications
+     *
+     * @param  string|null  $message  Optional message to process
+     * @param  string  $format  Response format: 'plain', 'json', or 'sse'
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    public function streamResponse(?string $message = null, string $format = 'plain')
+    {
+        $contentType = match ($format) {
+            'json' => 'application/json',
+            'sse' => 'text/event-stream',
+            default => 'text/plain',
+        };
+
+        return response()->stream(function () use ($message, $format) {
+            $stream = $this->respondStreamed($message, function ($chunk) use (&$accumulated, $format) {
+                if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
+                    $delta = $chunk->getLastChunk();
+
+                    if ($format === 'plain') {
+                        echo $delta;
+                    } elseif ($format === 'json') {
+                        echo json_encode([
+                            'delta' => $delta,
+                            'content' => $chunk->getContent(),
+                            'complete' => $chunk->isComplete(),
+                        ])."\n";
+                    } elseif ($format === 'sse') {
+                        echo "event: chunk\n";
+                        echo 'data: '.json_encode([
+                            'delta' => $delta,
+                            'content' => $chunk->getContent(),
+                            'complete' => $chunk->isComplete(),
+                        ])."\n\n";
+                    }
+
+                    ob_flush();
+                    flush();
+                } elseif (is_array($chunk)) {
+                    // Handle structured output (JSON schema response)
+                    if ($format === 'plain') {
+                        echo json_encode($chunk, JSON_PRETTY_PRINT);
+                    } elseif ($format === 'json') {
+                        echo json_encode([
+                            'type' => 'structured',
+                            'delta' => '',
+                            'content' => $chunk,
+                            'complete' => true,
+                        ])."\n";
+                    } elseif ($format === 'sse') {
+                        echo "event: structured\n";
+                        echo 'data: '.json_encode([
+                            'type' => 'structured',
+                            'delta' => '',
+                            'content' => $chunk,
+                            'complete' => true,
+                        ])."\n\n";
+                    }
+
+                    ob_flush();
+                    flush();
+                }
+            });
+
+            // Consume the stream
+            foreach ($stream as $_) {
+                // The callback handles the output
+            }
+
+            // Signal completion
+            if ($format === 'sse') {
+                echo "event: complete\n";
+                echo 'data: '.json_encode(['content' => $accumulated])."\n\n";
+                ob_flush();
+                flush();
+            }
+        }, 200, [
+            'Content-Type' => $contentType,
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+        ]);
     }
 
     // Overridables
@@ -627,6 +740,31 @@ class Agent
     {
         $chatHistory = $this->createChatHistory($this->getChatSessionId());
         $this->setChatHistory($chatHistory);
+    }
+
+    protected function prepareMessage(): MessageInterface
+    {
+        $message = Message::user($this->prompt($this->message));
+
+        if (! empty($this->images)) {
+            foreach ($this->images as $imageUrl) {
+                $message = $message->withImage($imageUrl);
+            }
+        }
+
+        return $message;
+    }
+
+    protected function prepareAgent(MessageInterface $message): void
+    {
+        $this->agent
+            ->withInstructions($this->instructions(), $this->developerRoleForInstructions)
+            ->withMessage($message)
+            ->setTools($this->getTools());
+
+        if ($this->structuredOutput()) {
+            $this->agent->structured($this->structuredOutput());
+        }
     }
 
     /**

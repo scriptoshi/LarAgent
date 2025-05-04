@@ -13,6 +13,24 @@ _Need to use LarAgent outside of Laravel? Check out this [Docs](https://docs.lar
 
 __If you prefer article to get started, check it out [Laravel AI Agent Development Made Easy](https://medium.com/towardsdev/laravel-ai-agent-development-made-easy-ac7ddd17a7d0)__
 
+
+## Table of Contents
+
+- [📖 Introduction](#introduction)
+- [🎉 Features](#features) 
+- [📅 Planned](#planned) 
+- [🚀 Getting Started](#getting-started)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [🤝 Contributing](#contributing)
+- [🤝 Getting Help](#getting-help)
+- [🧪 Testing](#testing)
+- [🔒 Security](#security)
+- [🙌 Credits](#credits)
+- [📜 License](#license)
+- [🛣️ Roadmap](#roadmap)
+
 ## Introduction
 
 LarAgent brings the power of AI agents to your Laravel projects with an elegant syntax. Create, extend, and manage AI agents with ease while maintaining Laravel's fluent API design patterns.
@@ -167,23 +185,6 @@ Here's what's coming next to make LarAgent even more powerful:
 - **Voice Chat Support** - Out of the box support for voice interactions with your agents
 
 Stay tuned! We're constantly working on making LarAgent the most versatile AI agent framework for Laravel.
-
-## Table of Contents
-
-#### 📚 We're working hard on the official documentation website. Thanks for your patience and support!
-
-- [📖 Introduction](#introduction)
-- [🚀 Getting Started](#getting-started)
-  - [Requirements](#requirements)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-- [🤝 Contributing](#contributing)
-- [🤝 Getting Help](#getting-help)
-- [🧪 Testing](#testing)
-- [🔒 Security](#security)
-- [🙌 Credits](#credits)
-- [📜 License](#license)
-- [🛣️ Roadmap](#roadmap)
 
 ## Getting Started
 

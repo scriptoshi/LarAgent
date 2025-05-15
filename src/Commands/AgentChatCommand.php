@@ -4,6 +4,7 @@ namespace LarAgent\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use LarAgent\Tests\Fakes\FakeLlmDriver;
 
 class AgentChatCommand extends Command
 {
@@ -17,14 +18,10 @@ class AgentChatCommand extends Command
         $historyName = $this->option('history') ?? Str::random(10);
 
         // Try both namespaces
-        $agentClass = "\\App\\AiAgents\\{$agentName}";
-        if (! class_exists($agentClass)) {
-            $agentClass = "\\App\\Agents\\{$agentName}";
-            if (! class_exists($agentClass)) {
-                $this->error("Agent not found: {$agentName}");
-
-                return 1;
-            }
+        $agentClass = $this->findAgentClass($agentName);
+        if (!$agentClass) {
+            $this->error("Agent not found: {$agentName}");
+            return 1;
         }
 
         $agent = $agentClass::for($historyName);
@@ -53,6 +50,20 @@ class AgentChatCommand extends Command
                 return 1;
             }
         }
+    }
+
+    protected function findAgentClass(string $agentName): ?string
+    {
+        $namespaces = config('laragent.namespaces');
+
+        foreach ($namespaces as $namespace) {
+            $fqcn = $namespace . $agentName;
+            if (class_exists($fqcn)) {
+                return $fqcn;
+            }
+        }
+
+        return null;
     }
 
     /**

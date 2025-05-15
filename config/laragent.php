@@ -15,6 +15,11 @@ return [
      */
     'default_chat_history' => \LarAgent\History\InMemoryChatHistory::class,
 
+    'namespaces' => [
+        'App\\AiAgents\\',
+        'App\\Agents\\',
+    ],
+
     /**
      * Always keep provider named 'default'
      * You can add more providers in array

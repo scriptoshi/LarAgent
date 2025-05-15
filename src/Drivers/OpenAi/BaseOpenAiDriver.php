@@ -333,10 +333,6 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
         if (! empty($this->tools)) {
             $tools = $this->getRegisteredTools();
             foreach ($tools as $tool) {
-                // Add a default property to bypass schema check of openai-php/client if no properties are defined
-                if (empty($tool->getProperties())) {
-                    $tool->addProperty('no_properties', ['string', 'null'], 'empty');
-                }
                 $payload['tools'][] = $this->formatToolForPayload($tool);
             }
         }

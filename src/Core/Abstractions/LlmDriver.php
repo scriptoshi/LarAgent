@@ -93,18 +93,22 @@ abstract class LlmDriver implements LlmDriverInterface
     public function formatToolForPayload(ToolInterface $tool): array
     {
         // Default OpenAI-compatible format
-        return [
+        $toolSchema = [
             'type' => 'function',
             'function' => [
                 'name' => $tool->getName(),
-                'description' => $tool->getDescription(),
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => $tool->getProperties(),
-                    'required' => $tool->getRequired(),
-                ],
+                'description' => $tool->getDescription()
             ],
         ];
+        if (!empty($tool->getProperties())) {
+            $toolSchema['function']['parameters'] = [
+                'type' => 'object',
+                'properties' => $tool->getProperties(),
+                'required' => $tool->getRequired(),
+            ];
+        }
+
+        return $toolSchema;
     }
 
     abstract public function toolResultToMessage(ToolCallInterface $toolCall, mixed $result): array;

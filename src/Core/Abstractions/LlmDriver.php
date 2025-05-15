@@ -97,10 +97,10 @@ abstract class LlmDriver implements LlmDriverInterface
             'type' => 'function',
             'function' => [
                 'name' => $tool->getName(),
-                'description' => $tool->getDescription()
+                'description' => $tool->getDescription(),
             ],
         ];
-        if (!empty($tool->getProperties())) {
+        if (! empty($tool->getProperties())) {
             $toolSchema['function']['parameters'] = [
                 'type' => 'object',
                 'properties' => $tool->getProperties(),

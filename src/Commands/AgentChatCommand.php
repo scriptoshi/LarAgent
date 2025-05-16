@@ -4,7 +4,6 @@ namespace LarAgent\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use LarAgent\Tests\Fakes\FakeLlmDriver;
 
 class AgentChatCommand extends Command
 {

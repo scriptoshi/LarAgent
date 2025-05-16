@@ -485,7 +485,7 @@ class Agent
     public function withTool(string|ToolInterface $tool): static
     {
         if (is_string($tool) && class_exists($tool)) {
-            $tool = new $tool();
+            $tool = new $tool;
         }
         $this->tools[] = $tool;
         $this->onToolChange($tool, true);

@@ -244,33 +244,33 @@ it('excludes parallel_tool_calls from config when set to null', function () {
 it('can add tool using class reference', function () {
     // Create a new agent instance
     $agent = TestAgent::for('test_session');
-    
+
     // Get initial tools count
     $initialTools = $agent->getTools();
     $initialCount = count($initialTools);
-    
+
     // Add tool using class reference
     $agent->withTool(WeatherTool::class);
-    
+
     // Get updated tools
     $updatedTools = $agent->getTools();
-    
+
     // Verify tool was added
     expect($updatedTools)->toHaveCount($initialCount + 1);
-    
+
     // Check if the WeatherTool was added
     $weatherToolFound = false;
     foreach ($updatedTools as $tool) {
-        if ($tool instanceof WeatherTool && 
+        if ($tool instanceof WeatherTool &&
             $tool->getName() === 'get_current_weather' &&
             $tool->getDescription() === 'Get the current weather in a given location') {
             $weatherToolFound = true;
             break;
         }
     }
-    
+
     expect($weatherToolFound)->toBeTrue();
-        
+
     // Verify method returns agent instance for chaining
     expect($agent->withTool(WeatherTool::class))->toBeInstanceOf(Agent::class);
 });
@@ -279,23 +279,22 @@ it('can remove tool by name', function () {
     // Create a new agent instance with the weather tool
     $agent = TestAgent::for('test_session');
     $agent->withTool(WeatherTool::class);
-    
+
     // Get initial tools count
     $initialTools = $agent->getTools();
     $initialCount = count($initialTools);
-    
+
     // Remove tool by name
     $agent->removeTool('get_current_weather');
-    
+
     // Get updated tools
     $updatedTools = $agent->getTools();
-    
+
     // Verify tool was removed
     expect($updatedTools)->toHaveCount($initialCount - 1)
-        ->and($updatedTools)->not->toContain(fn ($tool) => 
-            $tool instanceof WeatherTool
+        ->and($updatedTools)->not->toContain(fn ($tool) => $tool instanceof WeatherTool
         );
-        
+
     // Verify method returns agent instance for chaining
     expect($agent->removeTool('test_tool'))->toBeInstanceOf(Agent::class);
 });
@@ -304,50 +303,48 @@ it('can remove tool by class reference', function () {
     // Create a new agent instance with the weather tool
     $agent = TestAgent::for('test_session');
     $agent->withTool(WeatherTool::class);
-    
+
     // Get initial tools count
     $initialTools = $agent->getTools();
     $initialCount = count($initialTools);
-    
+
     // Remove tool by class reference
     $agent->removeTool(WeatherTool::class);
-    
+
     // Get updated tools
     $updatedTools = $agent->getTools();
-    
+
     // Verify tool was removed
     expect($updatedTools)->toHaveCount($initialCount - 1)
-        ->and($updatedTools)->not->toContain(fn ($tool) => 
-            $tool instanceof WeatherTool
+        ->and($updatedTools)->not->toContain(fn ($tool) => $tool instanceof WeatherTool
         );
 });
 
 it('can remove tool by tool object', function () {
     // Create a new agent instance
     $agent = TestAgent::for('test_session');
-    
+
     // Create a custom tool with a specific name
     $toolName = 'custom_tool';
     $customTool = Tool::create($toolName, 'A custom tool for testing')
         ->setCallback(fn ($param) => "Result: {$param}");
-    
+
     // Add the custom tool
     $agent->withTool($customTool);
-    
+
     // Get initial tools count
     $initialTools = $agent->getTools();
     $initialCount = count($initialTools);
-    
+
     // Remove tool by tool object
     $agent->removeTool($customTool);
-    
+
     // Get updated tools
     $updatedTools = $agent->getTools();
-    
+
     // Verify tool was removed
     expect($updatedTools)->toHaveCount($initialCount - 1)
-        ->and($updatedTools)->not->toContain(fn ($tool) => 
-            $tool->getName() === 'custom_tool'
+        ->and($updatedTools)->not->toContain(fn ($tool) => $tool->getName() === 'custom_tool'
         );
 });
 

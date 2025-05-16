@@ -487,7 +487,7 @@ class Agent
     public function withTool(string|ToolInterface $tool): static
     {
         if (is_string($tool) && class_exists($tool)) {
-            $tool = new $tool();
+            $tool = new $tool;
         }
         $this->tools[] = $tool;
         $this->onToolChange($tool, true);
@@ -498,7 +498,7 @@ class Agent
     public function removeTool(string|ToolInterface $name): static
     {
         if (is_string($name) && class_exists($name)) {
-            $name = (new $name())->getName();
+            $name = (new $name)->getName();
         }
         if ($name instanceof ToolInterface) {
             $name = $name->getName();

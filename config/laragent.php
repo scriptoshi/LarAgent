@@ -16,6 +16,15 @@ return [
     'default_chat_history' => \LarAgent\History\InMemoryChatHistory::class,
 
     /**
+     * Autodiscovery namespaces for Agent classes.
+     * Used by `agent:chat` to locate agents.
+     */
+    'namespaces' => [
+        'App\\AiAgents\\',
+        'App\\Agents\\',
+    ],
+
+    /**
      * Always keep provider named 'default'
      * You can add more providers in array
      * by copying the 'default' provider

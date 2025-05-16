@@ -415,7 +415,12 @@ class Agent
     {
         // Get tools from $tools property (class names)
         $classTools = array_map(function ($tool) {
-            return new $tool;
+            if (is_string($tool) && class_exists($tool)) {
+                return new $tool;
+            }
+            if ($tool instanceof ToolInterface) {
+                return $tool;
+            }
         }, $this->tools);
 
         // Get tools from registerTools method (instances)
@@ -479,16 +484,25 @@ class Agent
         });
     }
 
-    public function withTool(ToolInterface $tool): static
+    public function withTool(string|ToolInterface $tool): static
     {
+        if (is_string($tool) && class_exists($tool)) {
+            $tool = new $tool();
+        }
         $this->tools[] = $tool;
         $this->onToolChange($tool, true);
 
         return $this;
     }
 
-    public function removeTool(string $name): static
+    public function removeTool(string|ToolInterface $name): static
     {
+        if (is_string($name) && class_exists($name)) {
+            $name = (new $name())->getName();
+        }
+        if ($name instanceof ToolInterface) {
+            $name = $name->getName();
+        }
         foreach ($this->tools as $key => $tool) {
             if ($tool->getName() === $name) {
                 unset($this->tools[$key]);

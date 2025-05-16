@@ -6,6 +6,7 @@ use LarAgent\Message;
 use LarAgent\Tests\Fakes\FakeLlmDriver;
 use LarAgent\Tool;
 
+// Test agent
 class TestAgent extends Agent
 {
     protected $model = 'gpt-4o-mini';
@@ -58,6 +59,36 @@ class TestAgent extends Agent
     protected function afterToolExecution($tool, &$result)
     {
         $this->saveToolResult = $result;
+    }
+}
+
+// Test tool
+class WeatherTool extends Tool
+{
+    protected string $name = 'get_current_weather';
+
+    protected string $description = 'Get the current weather in a given location';
+
+    protected array $properties = [
+        'location' => [
+            'type' => 'string',
+            'description' => 'The city and state, e.g. San Francisco, CA',
+        ],
+        'unit' => [
+            'type' => 'string',
+            'description' => 'The unit of temperature',
+            'enum' => ['celsius', 'fahrenheit'],
+        ],
+    ];
+
+    protected array $required = ['location'];
+
+    protected array $metaData = ['sent_at' => '2024-01-01'];
+
+    public function execute(array $input): mixed
+    {
+        // Call the weather API
+        return 'The weather in '.$input['location'].' is '.rand(10, 60).' degrees '.$input['unit'];
     }
 }
 
@@ -193,7 +224,7 @@ it('can add custom message to chat history', function () {
 });
 
 it('excludes parallel_tool_calls from config when set to null', function () {
-    $agent = new TestAgent('test_session');
+    $agent = TestAgent::for('test_session');
     $reflection = new ReflectionClass($agent);
     $parallelToolCalls = $reflection->getProperty('parallelToolCalls');
     $parallelToolCalls->setAccessible(true);
@@ -208,6 +239,116 @@ it('excludes parallel_tool_calls from config when set to null', function () {
 
     expect($config)->toHaveKey('parallelToolCalls')
         ->and($config['parallelToolCalls'])->toBeNull();
+});
+
+it('can add tool using class reference', function () {
+    // Create a new agent instance
+    $agent = TestAgent::for('test_session');
+    
+    // Get initial tools count
+    $initialTools = $agent->getTools();
+    $initialCount = count($initialTools);
+    
+    // Add tool using class reference
+    $agent->withTool(WeatherTool::class);
+    
+    // Get updated tools
+    $updatedTools = $agent->getTools();
+    
+    // Verify tool was added
+    expect($updatedTools)->toHaveCount($initialCount + 1);
+    
+    // Check if the WeatherTool was added
+    $weatherToolFound = false;
+    foreach ($updatedTools as $tool) {
+        if ($tool instanceof WeatherTool && 
+            $tool->getName() === 'get_current_weather' &&
+            $tool->getDescription() === 'Get the current weather in a given location') {
+            $weatherToolFound = true;
+            break;
+        }
+    }
+    
+    expect($weatherToolFound)->toBeTrue();
+        
+    // Verify method returns agent instance for chaining
+    expect($agent->withTool(WeatherTool::class))->toBeInstanceOf(Agent::class);
+});
+
+it('can remove tool by name', function () {
+    // Create a new agent instance with the weather tool
+    $agent = TestAgent::for('test_session');
+    $agent->withTool(WeatherTool::class);
+    
+    // Get initial tools count
+    $initialTools = $agent->getTools();
+    $initialCount = count($initialTools);
+    
+    // Remove tool by name
+    $agent->removeTool('get_current_weather');
+    
+    // Get updated tools
+    $updatedTools = $agent->getTools();
+    
+    // Verify tool was removed
+    expect($updatedTools)->toHaveCount($initialCount - 1)
+        ->and($updatedTools)->not->toContain(fn ($tool) => 
+            $tool instanceof WeatherTool
+        );
+        
+    // Verify method returns agent instance for chaining
+    expect($agent->removeTool('test_tool'))->toBeInstanceOf(Agent::class);
+});
+
+it('can remove tool by class reference', function () {
+    // Create a new agent instance with the weather tool
+    $agent = TestAgent::for('test_session');
+    $agent->withTool(WeatherTool::class);
+    
+    // Get initial tools count
+    $initialTools = $agent->getTools();
+    $initialCount = count($initialTools);
+    
+    // Remove tool by class reference
+    $agent->removeTool(WeatherTool::class);
+    
+    // Get updated tools
+    $updatedTools = $agent->getTools();
+    
+    // Verify tool was removed
+    expect($updatedTools)->toHaveCount($initialCount - 1)
+        ->and($updatedTools)->not->toContain(fn ($tool) => 
+            $tool instanceof WeatherTool
+        );
+});
+
+it('can remove tool by tool object', function () {
+    // Create a new agent instance
+    $agent = TestAgent::for('test_session');
+    
+    // Create a custom tool with a specific name
+    $toolName = 'custom_tool';
+    $customTool = Tool::create($toolName, 'A custom tool for testing')
+        ->setCallback(fn ($param) => "Result: {$param}");
+    
+    // Add the custom tool
+    $agent->withTool($customTool);
+    
+    // Get initial tools count
+    $initialTools = $agent->getTools();
+    $initialCount = count($initialTools);
+    
+    // Remove tool by tool object
+    $agent->removeTool($customTool);
+    
+    // Get updated tools
+    $updatedTools = $agent->getTools();
+    
+    // Verify tool was removed
+    expect($updatedTools)->toHaveCount($initialCount - 1)
+        ->and($updatedTools)->not->toContain(fn ($tool) => 
+            $tool->getName() === 'custom_tool'
+        );
 });
 
 it('uses developer role for instructions when enabled', function () {

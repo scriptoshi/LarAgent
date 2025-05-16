@@ -15,6 +15,10 @@ return [
      */
     'default_chat_history' => \LarAgent\History\InMemoryChatHistory::class,
 
+    /**
+     * Autodiscovery namespaces for Agent classes.
+     * Used by `agent:chat` to locate agents.
+     */
     'namespaces' => [
         'App\\AiAgents\\',
         'App\\Agents\\',

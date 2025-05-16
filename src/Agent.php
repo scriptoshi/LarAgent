@@ -418,9 +418,7 @@ class Agent
             if (is_string($tool) && class_exists($tool)) {
                 return new $tool;
             }
-            if ($tool instanceof ToolInterface) {
-                return $tool;
-            }
+            return $tool;
         }, $this->tools);
 
         // Get tools from registerTools method (instances)
@@ -495,23 +493,27 @@ class Agent
         return $this;
     }
 
-    public function removeTool(string|ToolInterface $name): static
+    public function removeTool(string|ToolInterface $tool): static
     {
-        if (is_string($name) && class_exists($name)) {
-            $name = (new $name())->getName();
-        }
-        if ($name instanceof ToolInterface) {
-            $name = $name->getName();
-        }
-        foreach ($this->tools as $key => $tool) {
-            if ($tool->getName() === $name) {
-                unset($this->tools[$key]);
-                $this->onToolChange($tool, false);
-                break;
+        $toolName = $this->getToolName($tool);
+
+        $this->tools = array_filter($this->tools, function ($existingTool) use ($toolName) {
+            if ($existingTool->getName() !== $toolName) {
+                return true;
             }
-        }
+            $this->onToolChange($existingTool, false);
+            return false;
+        });
 
         return $this;
+    }
+
+    private function getToolName(string|ToolInterface $tool): string
+    {
+        if (is_string($tool)) {
+            return class_exists($tool) ? (new $tool())->getName() : $tool;
+        }
+        return $tool->getName();
     }
 
     public function withImages(array $imageUrls): static

@@ -418,6 +418,7 @@ class Agent
             if (is_string($tool) && class_exists($tool)) {
                 return new $tool;
             }
+
             return $tool;
         }, $this->tools);
 
@@ -502,6 +503,7 @@ class Agent
                 return true;
             }
             $this->onToolChange($existingTool, false);
+
             return false;
         });
 
@@ -511,8 +513,9 @@ class Agent
     private function getToolName(string|ToolInterface $tool): string
     {
         if (is_string($tool)) {
-            return class_exists($tool) ? (new $tool())->getName() : $tool;
+            return class_exists($tool) ? (new $tool)->getName() : $tool;
         }
+
         return $tool->getName();
     }
 

@@ -1,20 +1,20 @@
 {
-    "name": "maestroerror/laragent",
+    "name": "scriptoshi/laragent",
     "description": "Power of AI Agents in your Laravel project ",
     "keywords": [
-        "maestroerror",
+        "scriptoshi",
         "laravel",
         "laragent",
         "ai",
         "agent",
         "rag"
     ],
-    "homepage": "https://github.com/maestroerror/laragent",
+    "homepage": "https://github.com/scriptoshi/laragent",
     "license": "MIT",
     "authors": [
         {
-            "name": "maestroerror",
-            "email": "revaz.gh@gmail.com",
+            "name": "scriptoshi",
+            "email": "scriptoshi.com@gmail.com",
             "role": "Developer"
         }
     ],
@@ -22,7 +22,7 @@
         "php": "^8.3",
         "guzzlehttp/guzzle": "^7.9",
         "illuminate/contracts": "^10.0||^11.0||^12.0",
-        "openai-php/client": "^0.10.3",
+        "openai-php/client": "^0.13.0",
         "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {
